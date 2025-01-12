@@ -17,6 +17,7 @@ class Settings:
     PASSWORD = os.environ["PASSWORD"]
 
     SERIAL_PORT = os.environ["SERIAL_PORT"]
-
+    
+    BRAND_SIMILARITY_PERCENTAGE = os.environ["BRAND_SIMILARITY_PERCENTAGE"]
 
 settings = Settings()

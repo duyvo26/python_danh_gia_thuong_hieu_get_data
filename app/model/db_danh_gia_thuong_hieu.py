@@ -2,6 +2,7 @@
 import mysql.connector
 from mysql.connector import Error
 from app.config import settings
+from datetime import datetime
 
 
 # Hàm kết nối đến cơ sở dữ liệu MySQL
@@ -14,11 +15,42 @@ def connect_to_mysql():
             password=settings.PASSWORD,  # Mật khẩu
         )
         if connection.is_connected():
-            print("Kết nối thành công đến MySQL!")
+            print("successful_connection_to_mysql!")
             return connection
     except Error as e:
-        print("Lỗi khi kết nối đến MySQL:", e)
+        print("error_connecting_to_mysql:", e)
     return None
+
+
+# Hàm thêm dữ liệu vào bảng data_thuong_hieu
+def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs):
+    connection = connect_to_mysql()
+    if connection:
+        try:
+            cursor = connection.cursor()
+            # Lấy thời gian hiện tại cho datetime_data, created_at, và updated_at
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Câu lệnh SQL để thêm dữ liệu
+            query = """
+            INSERT INTO `data_thuong_hieu` (`id_rq`, `title`, `keyword`, `page_content`, `docs`, `datetime_data`, `created_at`, `updated_at`)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            # Dữ liệu cần thêm
+            data = (id_rq, title, keyword, page_content, docs, current_time, current_time, current_time)
+
+            # Thực thi câu lệnh SQL
+            cursor.execute(query, data)
+            connection.commit()
+            print("data_added_successfully!")
+        except Error as e:
+            print("error_adding_data:", e)
+        finally:
+            # Đóng kết nối và con trỏ
+            cursor.close()
+            connection.close()
+    else:
+        print("unable_to_connect_to_mysql_to_add_data.")
 
 
 # Hàm lấy dữ liệu từ bảng request_thuong_hieu_list
@@ -34,7 +66,7 @@ def get_request_thuong_hieu_list():
             FROM request_thuong_hieu_list
             JOIN request_thuong_hieu 
                 ON request_thuong_hieu.id_rq = request_thuong_hieu_list.id_rq
-            WHERE request_thuong_hieu_list.status = 0;
+            WHERE request_thuong_hieu_list.status = 0 OR request_thuong_hieu_list.google_html = '';
             """
             cursor = connection.cursor()
             cursor.execute(query)
@@ -42,11 +74,39 @@ def get_request_thuong_hieu_list():
             return rows
 
         except Error as e:
-            print("Lỗi khi thực hiện truy vấn:", e)
+            print("get_request_thuong_hieu_list: unable_to_connect_to_mysql_to_add_data.", e)
         finally:
             cursor.close()
             connection.close()
-            print("Kết nối MySQL đã được đóng.")
+            print("mysql_connection_has_been_closed.")
+
+
+def get_request_thuong_hieu_list_end():
+    connection = connect_to_mysql()
+    if connection:
+        try:
+            query = """
+            SELECT request_thuong_hieu_list.id_rq_list, 
+                request_thuong_hieu_list.id_rq,
+                request_thuong_hieu_list.google_html,
+                request_thuong_hieu.name_thuong_hieu
+                
+            FROM request_thuong_hieu_list
+            JOIN request_thuong_hieu 
+                ON request_thuong_hieu.id_rq = request_thuong_hieu_list.id_rq
+            WHERE request_thuong_hieu_list.status = 1 AND request_thuong_hieu_list.google_html != '';
+            """
+            cursor = connection.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            return rows
+
+        except Error as e:
+            print("error_while_executing_query:", e)
+        finally:
+            cursor.close()
+            connection.close()
+            print("get_request_thuong_hieu_list_end: mysql_connection_has_been_closed.")
 
 
 # Hàm cập nhật google_html và status của một bản ghi
@@ -70,13 +130,45 @@ def update_request_thuong_hieu_list(id_rq_list, google_html, status):
                 """
                 cursor.execute(update_query, (google_html, status, id_rq_list))
                 connection.commit()
-                print(f"Cập nhật thành công bản ghi với id_rq_list = {id_rq_list}")
+                print(f"successfully_updated_record_with_id_rq_list_= {id_rq_list}")
             else:
-                print(f"Không tìm thấy bản ghi với id_rq_list = {id_rq_list}")
+                print(f"no_record_found_with_id_rq_list= {id_rq_list}")
 
         except Error as e:
-            print("Lỗi khi thực hiện truy vấn:", e)
+            print("update_request_thuong_hieu_list: error_while_executing_query:", e)
         finally:
             cursor.close()
             connection.close()
-            print("Kết nối MySQL đã được đóng.")
+            print("mysql_connection_has_been_closed.")
+
+
+def update_request_thuong_hieu_list_end(id_rq_list, status):
+    connection = connect_to_mysql()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            # Kiểm tra xem bản ghi có tồn tại không
+            select_query = "SELECT * FROM request_thuong_hieu_list WHERE id_rq_list = %s"
+            cursor.execute(select_query, (id_rq_list,))
+            record = cursor.fetchone()
+
+            if record:
+                # Nếu bản ghi tồn tại, tiến hành cập nhật
+                update_query = """
+                    UPDATE request_thuong_hieu_list
+                    SET status = %s
+                    WHERE id_rq_list = %s
+                """
+                cursor.execute(update_query, (status, id_rq_list))
+                connection.commit()
+                print(f"record_updated_successfully_with id_rq_list = {id_rq_list}")
+            else:
+                print(f"no_record_found_with_id_rq_list = {id_rq_list}")
+
+        except Error as e:
+            print("update_request_thuong_hieu_list_end: error_while_executing_query:", e)
+        finally:
+            cursor.close()
+            connection.close()
+            print("mysql_connection_has_been_closed.")

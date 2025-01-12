@@ -6,6 +6,7 @@ import requests  # type: ignore
 import html
 from app.model.db_danh_gia_thuong_hieu import get_request_thuong_hieu_list, update_request_thuong_hieu_list
 from bs4 import BeautifulSoup
+from app.utils import sanitize_for_mysql
 
 
 class GetDataGoogle:
@@ -23,7 +24,7 @@ class GetDataGoogle:
     def reload_usb(self):
         threading.Thread(reset_wifi()).start()
 
-        [time.sleep(1) or print(_time) for _time in range(0, 120)]
+        [time.sleep(1) or print("reload usb:",_time) for _time in range(0, 120)]
 
         self.run(number=0, max_number=30)
 
@@ -60,11 +61,16 @@ class GetDataGoogle:
                     target=update_request_thuong_hieu_list,
                     args=(
                         id_rq_list,
-                        str(google_html),
+                        str(sanitize_for_mysql(google_html)),
                         1,
                     ),
                 ).start()
 
                 number += 1
+                
+            [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
+            
+            self.run(number=0, max_number=30)
+            
         except Exception as e:  # noqa: F841
             self.reload_usb()

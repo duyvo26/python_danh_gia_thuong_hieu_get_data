@@ -4,9 +4,14 @@ beautifulsoup4==4.12.3
 certifi==2024.12.14
 charset-normalizer==3.4.1
 idna==3.10
+joblib==1.4.2
 mysql-connector-python==9.1.0
+numpy==2.2.1
 pyserial==3.5
 python-dotenv==1.0.1
 requests==2.32.3
+scikit-learn==1.6.1
+scipy==1.15.1
 soupsieve==2.6
+threadpoolctl==3.5.0
 urllib3==2.3.0
