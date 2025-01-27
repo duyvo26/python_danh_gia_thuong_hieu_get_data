@@ -16,7 +16,7 @@ def reset_wifi():
 
     print("ON")
     SER.setDTR(False)
-    time.sleep(0.1)
+    time.sleep(5)
     SER.setDTR(True)
-    time.sleep(0.1)
+    time.sleep(5)
     print("END")

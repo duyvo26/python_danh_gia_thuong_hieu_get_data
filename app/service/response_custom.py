@@ -1,6 +1,15 @@
 import requests
 
 
+def check_captcha(html):
+    if "/recaptcha/".lower() in html.lower():
+        return False
+    if 'id="captcha-form"'.lower() in html.lower():
+        return False
+    if "https://www.google.com/recaptcha/api.js".lower() in html.lower():
+        return False
+    return True
+
 
 def response_custom(url):
     url_api = "http://localhost:8000/base/get-html/"  # URL của API
@@ -15,8 +24,10 @@ def response_custom(url):
     if response.status_code == 200:
         result = response.json()
         print(result["status_code"] == 200, result["status_code"])
-        if result["status_code"]  == 200:
+        if result["status_code"] == 200:
             # Tạo một response giả để trả kết quả đúng định dạng
-            return result["html"]
+            if check_captcha(result["html"]) is True:
+                return result["html"]
+            return None
         else:
-            return  None
+            return None
