@@ -21,7 +21,7 @@ class GetDataGoogle:
 
     def reload_usb(self):
         print("-reload_usb-")
-        threading.Thread(reset_wifi()).start()
+        # threading.Thread(reset_wifi()).start()
 
         [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 40)]
 
@@ -44,21 +44,23 @@ class GetDataGoogle:
 
                 _response = self.response_custom(url_thuong_hieu)
 
+                # print("_response.status_code", _response.status_code)
+
                 if _response is None:
                     self.reload_usb()
 
-                if _response.status_code != 200 or (number > max_number):
-                    self.reload_usb()
+                # if _response.status_code != 200 or (number > max_number):
+                #     self.reload_usb()
 
-                _response.encoding = "utf-8"
+                # _response.encoding = "utf-8"
 
-                soup = BeautifulSoup(_response.text, "html.parser")
+                soup = BeautifulSoup(_response, "html.parser")
 
-                urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+                # urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
 
-                print("_urls", urls)
+                # print("_urls", urls)
 
-                time.sleep(99999)
+                # time.sleep(99999)
 
                 # body = soup.find("body")
                 google_html = html.escape(str(soup))
@@ -79,4 +81,5 @@ class GetDataGoogle:
             self.run(number=0, max_number=30)
 
         except Exception as _:
+            print(_)
             self.reload_usb()
