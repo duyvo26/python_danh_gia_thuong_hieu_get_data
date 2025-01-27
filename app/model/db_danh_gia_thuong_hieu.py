@@ -23,7 +23,7 @@ def connect_to_mysql():
 
 
 # Hàm thêm dữ liệu vào bảng data_thuong_hieu
-def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs):
+def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_timeline):
     connection = connect_to_mysql()
     if connection:
         try:
@@ -37,7 +37,7 @@ def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
             # Dữ liệu cần thêm
-            data = (id_rq, title, keyword, page_content, docs, current_time, current_time, current_time)
+            data = (id_rq, title, keyword, page_content, docs, search_timeline, current_time, current_time)
 
             # Thực thi câu lệnh SQL
             cursor.execute(query, data)
@@ -89,7 +89,9 @@ def get_request_thuong_hieu_list_end():
             SELECT request_thuong_hieu_list.id_rq_list, 
                 request_thuong_hieu_list.id_rq,
                 request_thuong_hieu_list.google_html,
-                request_thuong_hieu.name_thuong_hieu
+                request_thuong_hieu.name_thuong_hieu,
+                request_thuong_hieu_list.start_date_thuong_hieu,
+                request_thuong_hieu_list.end_date_thuong_hieu
                 
             FROM request_thuong_hieu_list
             JOIN request_thuong_hieu 

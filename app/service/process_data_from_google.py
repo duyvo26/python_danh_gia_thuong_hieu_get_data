@@ -20,6 +20,15 @@ class ProcessDataFromGoogle:
             id_rq = i[1]
             brand_name = i[3]
             html_page = i[2]
+
+            start_date_thuong_hieu = i[4]
+            end_date_thuong_hieu = i[5]
+
+            search_timeline = {
+                "start_date_thuong_hieu": str(start_date_thuong_hieu),
+                "end_date_thuong_hieu": str(end_date_thuong_hieu),
+            }
+
             google_html = html.unescape(str(html_page))
             soup = BeautifulSoup(google_html, "html.parser")
 
@@ -48,13 +57,23 @@ class ProcessDataFromGoogle:
                         if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
                             settings.BRAND_SIMILARITY_PERCENTAGE
                         ):
-                            insert_data_thuong_hieu(id_rq, data_web[0], brand_name, data_web[1], data_web[2])
-                        else:
-                            update_request_thuong_hieu_list_end(id_rq_list, 2)
-                            print("no_record_found_with_id_rq_list")
+                            insert_data_thuong_hieu(
+                                id_rq=str(id_rq),
+                                title=str(data_web[0]),
+                                keyword=str(brand_name),
+                                page_content=str(data_web[1]),
+                                docs=str(data_web[2]),
+                                search_timeline=str(search_timeline),
+                            )
+                        # else:
+                        #     update_request_thuong_hieu_list_end(id_rq_list, 2)
+                        #     print("no_record_found_with_id_rq_list")
 
                 except Exception as e:
                     print("ProcessDataFromGoogle: run for 1", e)
+
+            update_request_thuong_hieu_list_end(id_rq_list, 2)
+            print("no_record_found_with_id_rq_list")
 
         [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
         self.run()

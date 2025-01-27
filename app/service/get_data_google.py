@@ -24,7 +24,7 @@ class GetDataGoogle:
     def reload_usb(self):
         threading.Thread(reset_wifi()).start()
 
-        [time.sleep(1) or print("reload usb:",_time) for _time in range(0, 120)]
+        [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 30)]
 
         self.run(number=0, max_number=30)
 
@@ -67,10 +67,10 @@ class GetDataGoogle:
                 ).start()
 
                 number += 1
-                
+
             [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
-            
+
             self.run(number=0, max_number=30)
-            
+
         except Exception as e:  # noqa: F841
             self.reload_usb()
