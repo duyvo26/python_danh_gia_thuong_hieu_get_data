@@ -36,10 +36,3 @@ def response_custom(url):
         fake_response = requests.models.Response()
         fake_response.status_code = 404
         return fake_response
-
-
-url_ = "https://www.google.com/search?q=%22g%E1%BA%A1o%20a%20an%22%20after:2019-01-15%20before:2019-01-22%20lang:vi&hl=vi"
-data = response_custom(url_)
-
-print(data.status_code)
-print(data.text)

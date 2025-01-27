@@ -2,36 +2,25 @@ import time
 from datetime import datetime
 from app.service.reset_wifi import reset_wifi
 import threading
-import requests  # type: ignore
 import html
 from app.model.db_danh_gia_thuong_hieu import get_request_thuong_hieu_list, update_request_thuong_hieu_list
 from bs4 import BeautifulSoup
 from app.utils import sanitize_for_mysql
-import random
+from app.service.response_custom import response_custom as _response_custom
 
 
 class GetDataGoogle:
     def __init__(self):
-        self.user_agents = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/112.0",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-        ]
+        pass
 
     def response_custom(self, url):
-        # Chọn ngẫu nhiên User-Agent
-        headers = {"User-Agent": random.choice(self.user_agents)}
         try:
-            response = requests.get(url, headers=headers, timeout=2)
-            return response
-        except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
+            return _response_custom(url)
+        except Exception as _:
             return None
 
     def reload_usb(self):
+        print("-reload_usb-")
         threading.Thread(reset_wifi()).start()
 
         [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 40)]
@@ -42,14 +31,6 @@ class GetDataGoogle:
         try:
             list_data = get_request_thuong_hieu_list()
             for data in list_data:
-                # url = "https://www.google.com/search?q"
-                # _response = self.response_custom(url)
-                # if _response is None:
-                #     self.reload_usb()
-
-                # if _response.status_code != 200 or (number > max_number):
-                #     self.reload_usb()
-
                 id_rq_list = data[0]
                 start_date_thuong_hieu = data[9].strftime("%Y-%m-%d") if isinstance(data[9], datetime) else str(data[9])
                 end_date_thuong_hieu = data[10].strftime("%Y-%m-%d") if isinstance(data[10], datetime) else str(data[10])
@@ -76,7 +57,7 @@ class GetDataGoogle:
                 urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
 
                 print("_urls", urls)
-                
+
                 time.sleep(99999)
 
                 # body = soup.find("body")
@@ -97,5 +78,5 @@ class GetDataGoogle:
 
             self.run(number=0, max_number=30)
 
-        except Exception as e:  # noqa: F841
+        except Exception as _:
             self.reload_usb()

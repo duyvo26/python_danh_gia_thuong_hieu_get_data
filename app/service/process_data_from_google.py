@@ -1,5 +1,4 @@
 import re
-import requests  # type: ignore
 import html
 from app.model.db_danh_gia_thuong_hieu import (
     get_request_thuong_hieu_list_end,
@@ -12,6 +11,7 @@ from bs4.element import Comment
 from app.utils.compare_titles import CompareTitles
 from app.config import settings
 import time
+from app.service.response_custom import response_custom as _response_custom
 
 
 class ProcessDataFromGoogle:
@@ -163,15 +163,8 @@ class ProcessDataFromGoogle:
             return 404
 
     def response_custom(self, url):
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-        }
-        try:
-            response = requests.get(url, headers=headers, timeout=5)
-            return response
-        except Exception as e:
-            print("ProcessDataFromGoogle: response_custom", e)
-            return 404
+        # Chọn ngẫu nhiên User-Agent
+        return _response_custom(url)
 
     def is_valid_url(self, url):
         # Regular expression for validating URLs
