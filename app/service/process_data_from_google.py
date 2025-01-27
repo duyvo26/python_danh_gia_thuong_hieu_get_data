@@ -78,8 +78,6 @@ class ProcessDataFromGoogle:
                             print("percent_same", percent_same)
                             print("percent_same_full", percent_same_full)
 
-                            time.sleep(999)
-
                             if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
                                 settings.BRAND_SIMILARITY_PERCENTAGE
                             ):
