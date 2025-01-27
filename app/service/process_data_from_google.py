@@ -1,7 +1,12 @@
 import re
 import requests  # type: ignore
 import html
-from app.model.db_danh_gia_thuong_hieu import get_request_thuong_hieu_list_end, insert_data_thuong_hieu, update_request_thuong_hieu_list_end
+from app.model.db_danh_gia_thuong_hieu import (
+    get_request_thuong_hieu_list_end,
+    get_brand_name,
+    insert_data_thuong_hieu,
+    update_request_thuong_hieu_list_end,
+)
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from app.utils.compare_titles import CompareTitles
@@ -15,64 +20,77 @@ class ProcessDataFromGoogle:
 
     def run(self):
         list_data = get_request_thuong_hieu_list_end()
+        print("len", len(list_data))
         for i in list_data:
-            id_rq_list = i[0]
-            id_rq = i[1]
-            brand_name = i[3]
-            html_page = i[2]
+            try:
+                id_rq_list = i[0]
+                id_rq = i[1]
+                html_page = i[2]
+                brand_name = get_brand_name(i[1])[0][4]
+                start_date_thuong_hieu = i[3]
+                end_date_thuong_hieu = i[4]
 
-            print("id_rq_list", id_rq_list)
+                print("id_rq_list", id_rq_list)
+                print("id_rq", id_rq)
+                # print("html_page", html_page)
+                print("brand_name", brand_name)
+                print("start_date_thuong_hieu", start_date_thuong_hieu)
+                print("end_date_thuong_hieu", end_date_thuong_hieu)
 
-            start_date_thuong_hieu = i[4]
-            end_date_thuong_hieu = i[5]
+                search_timeline = {
+                    "start_date_thuong_hieu": str(start_date_thuong_hieu),
+                    "end_date_thuong_hieu": str(end_date_thuong_hieu),
+                }
 
-            search_timeline = {
-                "start_date_thuong_hieu": str(start_date_thuong_hieu),
-                "end_date_thuong_hieu": str(end_date_thuong_hieu),
-            }
+                google_html = html.unescape(str(html_page))
+                soup = BeautifulSoup(google_html, "html.parser")
 
-            google_html = html.unescape(str(html_page))
-            soup = BeautifulSoup(google_html, "html.parser")
+                urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
 
-            urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+                print("_urls", urls)
 
-            _urls = []
-            for url_ in urls:
-                try:
-                    if "google." not in url_ and self.is_valid_url(url_):
-                        _urls.append(url_)
+                _urls = []
+                for url_ in urls:
+                    try:
+                        if "google." not in url_ and self.is_valid_url(url_):
+                            _urls.append(url_)
 
-                except Exception as e:
-                    print("ProcessDataFromGoogle: run for 0", e)
+                    except Exception as e:
+                        print("ProcessDataFromGoogle: run for 0", e)
 
-            for url in _urls:
-                try:
-                    print(url)
-                    data_web = self.get_html_page(url)
-                    # print("data_web", data_web)
-                    if data_web != 404:
-                        percent_same = CompareTitles().compare_text(brand_name, data_web[0])
-                        percent_same_full = CompareTitles().compare_text(brand_name, data_web[2])
-                        print("percent_same", percent_same)
-                        print("percent_same_full", percent_same_full)
+                print("_urls", _urls)
 
-                        if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
-                            settings.BRAND_SIMILARITY_PERCENTAGE
-                        ):
-                            insert_data_thuong_hieu(
-                                id_rq=str(id_rq),
-                                title=str(data_web[0]),
-                                keyword=str(brand_name),
-                                page_content=str(data_web[1]),
-                                docs=str(data_web[2]),
-                                search_timeline=str(search_timeline),
-                            )
-                        # else:
-                        #     update_request_thuong_hieu_list_end(id_rq_list, 2)
-                        #     print("no_record_found_with_id_rq_list")
+                for url in _urls:
+                    try:
+                        print(url)
+                        data_web = self.get_html_page(url)
+                        # print("data_web", data_web)
+                        if data_web != 404:
+                            percent_same = CompareTitles().compare_text(brand_name, data_web[0])
+                            percent_same_full = CompareTitles().compare_text(brand_name, data_web[2])
+                            print("percent_same", percent_same)
+                            print("percent_same_full", percent_same_full)
 
-                except Exception as e:
-                    print("ProcessDataFromGoogle: run for 1", e)
+                            if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
+                                settings.BRAND_SIMILARITY_PERCENTAGE
+                            ):
+                                insert_data_thuong_hieu(
+                                    id_rq=str(id_rq),
+                                    title=str(data_web[0]),
+                                    keyword=str(brand_name),
+                                    page_content=str(data_web[1]),
+                                    docs=str(data_web[2]),
+                                    search_timeline=str(search_timeline),
+                                )
+                            # else:
+                            #     update_request_thuong_hieu_list_end(id_rq_list, 2)
+                            #     print("no_record_found_with_id_rq_list")
+
+                    except Exception as e:
+                        print("ProcessDataFromGoogle: run for 1", e)
+            except Exception as e:
+                print("EX", e)
+                [time.sleep(1) or print("Null data:", _time) for _time in range(0, 5)]
 
             update_request_thuong_hieu_list_end(id_rq_list, 2)
             print("no_record_found_with_id_rq_list")

@@ -7,19 +7,29 @@ import html
 from app.model.db_danh_gia_thuong_hieu import get_request_thuong_hieu_list, update_request_thuong_hieu_list
 from bs4 import BeautifulSoup
 from app.utils import sanitize_for_mysql
+import random
 
 
 class GetDataGoogle:
     def __init__(self):
-        pass
+        self.user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/112.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
+        ]
 
     def response_custom(self, url):
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-        }
-        response = requests.get(url, headers=headers, timeout=2)
-
-        return response
+        # Chọn ngẫu nhiên User-Agent
+        headers = {"User-Agent": random.choice(self.user_agents)}
+        try:
+            response = requests.get(url, headers=headers, timeout=2)
+            return response
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            return None
 
     def reload_usb(self):
         threading.Thread(reset_wifi()).start()
@@ -33,9 +43,12 @@ class GetDataGoogle:
             list_data = get_request_thuong_hieu_list()
             for data in list_data:
                 # url = "https://www.google.com/search?q"
-                # _response = response_custom(url)
+                # _response = self.response_custom(url)
+                # if _response is None:
+                #     self.reload_usb()
+
                 # if _response.status_code != 200 or (number > max_number):
-                #     reload_usb()
+                #     self.reload_usb()
 
                 id_rq_list = data[0]
                 start_date_thuong_hieu = data[9].strftime("%Y-%m-%d") if isinstance(data[9], datetime) else str(data[9])
@@ -43,10 +56,15 @@ class GetDataGoogle:
                 name_thuong_hieu = data[8].lower()
                 print("len data", len(list_data))
                 print("name_thuong_hieu", name_thuong_hieu)
-                url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu} lang:vi&hl=vi"
+                url_thuong_hieu = (
+                    f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}"
+                )
                 print("url: ", url_thuong_hieu)
 
                 _response = self.response_custom(url_thuong_hieu)
+
+                if _response is None:
+                    self.reload_usb()
 
                 if _response.status_code != 200 or (number > max_number):
                     self.reload_usb()
@@ -54,8 +72,15 @@ class GetDataGoogle:
                 _response.encoding = "utf-8"
 
                 soup = BeautifulSoup(_response.text, "html.parser")
-                body = soup.find("body")
-                google_html = html.escape(str(body))
+
+                urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+
+                print("_urls", urls)
+                
+                time.sleep(99999)
+
+                # body = soup.find("body")
+                google_html = html.escape(str(soup))
 
                 threading.Thread(
                     target=update_request_thuong_hieu_list,

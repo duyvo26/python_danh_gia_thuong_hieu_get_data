@@ -81,22 +81,50 @@ def get_request_thuong_hieu_list():
             print("mysql_connection_has_been_closed.")
 
 
+# def get_request_thuong_hieu_list_end():
+#     connection = connect_to_mysql()
+#     if connection:
+#         try:
+#             query = """
+#             SELECT request_thuong_hieu_list.id_rq_list,
+#                 request_thuong_hieu_list.id_rq,
+#                 request_thuong_hieu_list.google_html,
+#                 request_thuong_hieu.name_thuong_hieu,
+#                 request_thuong_hieu_list.start_date_thuong_hieu,
+#                 request_thuong_hieu_list.end_date_thuong_hieu
+
+#             FROM request_thuong_hieu_list
+#             JOIN request_thuong_hieu
+#                 ON request_thuong_hieu.id_rq = request_thuong_hieu_list.id_rq
+#             WHERE request_thuong_hieu_list.status = 1 AND request_thuong_hieu_list.google_html != '';
+#             """
+#             cursor = connection.cursor()
+#             cursor.execute(query)
+#             rows = cursor.fetchall()
+#             return rows
+
+#         except Error as e:
+#             print("error_while_executing_query:", e)
+#         finally:
+#             cursor.close()
+#             connection.close()
+#             print("get_request_thuong_hieu_list_end: mysql_connection_has_been_closed.")
+
+
 def get_request_thuong_hieu_list_end():
     connection = connect_to_mysql()
     if connection:
         try:
             query = """
-            SELECT request_thuong_hieu_list.id_rq_list, 
-                request_thuong_hieu_list.id_rq,
-                request_thuong_hieu_list.google_html,
-                request_thuong_hieu.name_thuong_hieu,
-                request_thuong_hieu_list.start_date_thuong_hieu,
-                request_thuong_hieu_list.end_date_thuong_hieu
+            SELECT id_rq_list, 
+                id_rq,
+                google_html,
+                start_date_thuong_hieu,
+                end_date_thuong_hieu
                 
             FROM request_thuong_hieu_list
-            JOIN request_thuong_hieu 
-                ON request_thuong_hieu.id_rq = request_thuong_hieu_list.id_rq
-            WHERE request_thuong_hieu_list.status = 1 AND request_thuong_hieu_list.google_html != '';
+            
+            WHERE status = 1 AND google_html != '';
             """
             cursor = connection.cursor()
             cursor.execute(query)
@@ -109,6 +137,26 @@ def get_request_thuong_hieu_list_end():
             cursor.close()
             connection.close()
             print("get_request_thuong_hieu_list_end: mysql_connection_has_been_closed.")
+
+
+def get_brand_name(id_rq):
+    connection = connect_to_mysql()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            # Kiểm tra xem bản ghi có tồn tại không
+            select_query = "SELECT * FROM request_thuong_hieu WHERE id_rq = %s"
+            cursor.execute(select_query, (id_rq,))
+            rows = cursor.fetchall()
+            return rows
+
+        except Error as e:
+            print("error_while_executing_query:", e)
+        finally:
+            cursor.close()
+            connection.close()
+            print("get_brand_name: mysql_connection_has_been_closed.")
 
 
 # Hàm cập nhật google_html và status của một bản ghi
