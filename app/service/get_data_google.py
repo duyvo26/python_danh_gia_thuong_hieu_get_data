@@ -24,7 +24,7 @@ class GetDataGoogle:
     def reload_usb(self):
         threading.Thread(reset_wifi()).start()
 
-        [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 30)]
+        [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 40)]
 
         self.run(number=0, max_number=30)
 

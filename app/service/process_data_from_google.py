@@ -21,6 +21,8 @@ class ProcessDataFromGoogle:
             brand_name = i[3]
             html_page = i[2]
 
+            print("id_rq_list", id_rq_list)
+
             start_date_thuong_hieu = i[4]
             end_date_thuong_hieu = i[5]
 
