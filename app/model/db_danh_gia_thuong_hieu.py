@@ -22,7 +22,37 @@ def connect_to_mysql():
     return None
 
 
-# Hàm thêm dữ liệu vào bảng data_thuong_hieu
+# # Hàm thêm dữ liệu vào bảng data_thuong_hieu
+# def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_timeline):
+#     connection = connect_to_mysql()
+#     if connection:
+#         try:
+#             cursor = connection.cursor()
+#             # Lấy thời gian hiện tại cho datetime_data, created_at, và updated_at
+#             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+#             # Câu lệnh SQL để thêm dữ liệu
+#             query = """
+#             INSERT INTO `data_thuong_hieu` (`id_rq`, `title`, `keyword`, `page_content`, `docs`, `datetime_data`, `created_at`, `updated_at`)
+#             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+#             """
+#             # Dữ liệu cần thêm
+#             data = (id_rq, title, keyword, page_content, docs, search_timeline, current_time, current_time)
+
+#             # Thực thi câu lệnh SQL
+#             cursor.execute(query, data)
+#             connection.commit()
+#             print("data_added_successfully!")
+#         except Error as e:
+#             print("error_adding_data:", e)
+#         finally:
+#             # Đóng kết nối và con trỏ
+#             cursor.close()
+#             connection.close()
+#     else:
+#         print("unable_to_connect_to_mysql_to_add_data.")
+
+
 def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_timeline):
     connection = connect_to_mysql()
     if connection:
@@ -30,6 +60,20 @@ def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_ti
             cursor = connection.cursor()
             # Lấy thời gian hiện tại cho datetime_data, created_at, và updated_at
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Kiểm tra xem bản ghi đã tồn tại trong bảng chưa
+            check_query = """
+            SELECT COUNT(*) FROM `data_thuong_hieu`
+            WHERE `id_rq` = %s AND `title` = %s AND `keyword` = %s AND `page_content` = %s AND `datetime_data` = %s
+            """
+            check_data = (id_rq, title, keyword, page_content, search_timeline)
+            cursor.execute(check_query, check_data)
+            result = cursor.fetchone()
+
+            # Nếu đã có bản ghi tồn tại, bỏ qua việc thêm dữ liệu
+            if result[0] > 0:
+                print("Data already exists, skipping insert.")
+                return
 
             # Câu lệnh SQL để thêm dữ liệu
             query = """
@@ -42,15 +86,15 @@ def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_ti
             # Thực thi câu lệnh SQL
             cursor.execute(query, data)
             connection.commit()
-            print("data_added_successfully!")
+            print("Data added successfully!")
         except Error as e:
-            print("error_adding_data:", e)
+            print("Error adding data:", e)
         finally:
             # Đóng kết nối và con trỏ
             cursor.close()
             connection.close()
     else:
-        print("unable_to_connect_to_mysql_to_add_data.")
+        print("Unable to connect to MySQL to add data.")
 
 
 # Hàm lấy dữ liệu từ bảng request_thuong_hieu_list

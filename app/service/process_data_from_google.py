@@ -18,6 +18,13 @@ class ProcessDataFromGoogle:
     def __init__(self):
         pass
 
+    def extract_url(self, input_str):
+        # Sử dụng regular expression để tìm URL
+        match = re.search(r"url\?q=(https?://[^\s&]+)", input_str)
+        if match:
+            return match.group(1)  # Trả về URL
+        return None  # Nếu không tìm thấy URL
+
     def run(self):
         list_data = get_request_thuong_hieu_list_end()
         print("len", len(list_data))
@@ -45,7 +52,7 @@ class ProcessDataFromGoogle:
                 google_html = html.unescape(str(html_page))
                 soup = BeautifulSoup(google_html, "html.parser")
 
-                urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+                urls = list(set([self.extract_url(a.get("href")) for a in soup.find_all("a", href=True)]))
 
                 print("_urls", urls)
 
@@ -71,6 +78,8 @@ class ProcessDataFromGoogle:
                             print("percent_same", percent_same)
                             print("percent_same_full", percent_same_full)
 
+                            time.sleep(999)
+
                             if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
                                 settings.BRAND_SIMILARITY_PERCENTAGE
                             ):
@@ -82,15 +91,13 @@ class ProcessDataFromGoogle:
                                     docs=str(data_web[2]),
                                     search_timeline=str(search_timeline),
                                 )
-                            # else:
-                            #     update_request_thuong_hieu_list_end(id_rq_list, 2)
-                            #     print("no_record_found_with_id_rq_list")
 
                     except Exception as e:
                         print("ProcessDataFromGoogle: run for 1", e)
             except Exception as e:
                 print("EX", e)
                 [time.sleep(1) or print("Null data:", _time) for _time in range(0, 5)]
+                self.run()
 
             update_request_thuong_hieu_list_end(id_rq_list, 2)
             print("no_record_found_with_id_rq_list")
@@ -145,17 +152,16 @@ class ProcessDataFromGoogle:
                 return replace_newlines(string_)
 
             _response = self.response_custom(url)
-            if _response != 404:
-                if _response.status_code == 200:
-                    soup = BeautifulSoup(_response.text, "html.parser")
-                    title = soup.find("title")
-                    if title:
-                        title = title.string
-                        print("title", title)
+            if _response is not None:
+                soup = BeautifulSoup(_response, "html.parser")
+                title = soup.find("title")
+                if title:
+                    title = title.string
+                    print("title", title)
 
-                        page_content = text_from_html(soup)
-                        docs = self.parse(_response.text, url)
-                        return (title), (page_content), str(docs)
+                    page_content = text_from_html(soup)
+                    docs = self.parse(_response, url)
+                    return (title), (page_content), str(docs)
 
             return 404
         except Exception as e:
