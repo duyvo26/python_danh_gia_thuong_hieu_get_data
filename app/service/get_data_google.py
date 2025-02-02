@@ -21,7 +21,7 @@ class GetDataGoogle:
 
     def reload_usb(self):
         print("-reload_usb-")
-        threading.Thread(reset_wifi()).start()
+        # threading.Thread(reset_wifi()).start()
         [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 40)]
         self.run(number=0, max_number=30)
 
@@ -33,12 +33,13 @@ class GetDataGoogle:
                 start_date_thuong_hieu = data[9].strftime("%Y-%m-%d") if isinstance(data[9], datetime) else str(data[9])
                 end_date_thuong_hieu = data[10].strftime("%Y-%m-%d") if isinstance(data[10], datetime) else str(data[10])
                 name_thuong_hieu = data[8].lower()
-                print("len data", len(list_data))
-                print("name_thuong_hieu", name_thuong_hieu)
+                # print("len data", len(list_data))
+                # print("name_thuong_hieu", name_thuong_hieu)
                 url_thuong_hieu = (
                     f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}"
                 )
                 print("url: ", url_thuong_hieu)
+                print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                 _response = self.response_custom(url_thuong_hieu)
 
@@ -54,15 +55,21 @@ class GetDataGoogle:
 
                 soup = BeautifulSoup(_response, "html.parser")
 
-                # urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+                # if 'href="https://www.google.com/webh' not in soup:
+                #     self.reload_usb()
 
-                # print("_urls", urls)
+                urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+
+                print("_urls", urls)
 
                 # time.sleep(99999)
 
                 # body = soup.find("body")
                 google_html = html.escape(str(soup))
-
+                print("********************************")
+                print("get_data_google: 200")
+                print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                print("-------------------------")
                 threading.Thread(
                     target=update_request_thuong_hieu_list,
                     args=(
@@ -80,4 +87,7 @@ class GetDataGoogle:
 
         except Exception as _:
             print(_)
+            print("********************************")
+            print("get_data_google: 404")
+            print("-------------------------")
             self.reload_usb()

@@ -12,6 +12,7 @@ from app.utils.compare_titles import CompareTitles
 from app.config import settings
 import time
 from app.service.response_custom import response_custom as _response_custom
+import requests
 
 
 class ProcessDataFromGoogle:
@@ -168,7 +169,18 @@ class ProcessDataFromGoogle:
 
     def response_custom(self, url):
         # Chọn ngẫu nhiên User-Agent
-        return _response_custom(url)
+        # return _response_custom(url)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+        }
+        try:
+            response = requests.get(url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                return response.text
+            return None
+        except Exception as e:
+            print("ProcessDataFromGoogle: response_custom", e)
+            return 404
 
     def is_valid_url(self, url):
         # Regular expression for validating URLs
