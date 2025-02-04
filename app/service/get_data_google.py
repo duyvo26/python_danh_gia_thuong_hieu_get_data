@@ -49,64 +49,59 @@ class GetDataGoogle:
                 start_date_thuong_hieu = data[9].strftime("%Y-%m-%d") if isinstance(data[9], datetime) else str(data[9])
                 end_date_thuong_hieu = data[10].strftime("%Y-%m-%d") if isinstance(data[10], datetime) else str(data[10])
                 name_thuong_hieu = data[8].lower()
-                # print("len data", len(list_data))
-                # print("name_thuong_hieu", name_thuong_hieu)
+
                 url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi"
                 print("url: ", url_thuong_hieu)
                 print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                 _response = self.response_custom(url_thuong_hieu)
 
-                # print("_response.status_code", _response.status_code)
-
                 if _response is None:
                     print("_response None")
                     self.reload_usb()
-
-                # if _response.status_code != 200 or (number > max_number):
-                #     self.reload_usb()
-
-                # _response.encoding = "utf-8"
 
                 if ">Tất cả".lower() not in _response.lower():
                     print("check tat ca fail")
                     self.reload_usb()
 
-                soup = BeautifulSoup(_response, "html.parser")
+                # soup = BeautifulSoup(_response, "html.parser")
 
-                urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+                # urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
 
-                # print("_urls", urls)
+                # _urls = []
+                # for url_ in urls:
+                #     try:
+                #         url_ = self.extract_url(url_)
+                #         if url_ is None:
+                #             continue
+                #         if "google." not in url_ and self.is_valid_url(url_):
+                #             _urls.append(url_)
 
-                _urls = []
-                for url_ in urls:
-                    # print(url_)
-                    try:
-                        url_ = self.extract_url(url_)
-                        if url_ is None:
-                            continue
-                        if "google." not in url_ and self.is_valid_url(url_):
-                            _urls.append(url_)
+                #     except Exception as e:
+                #         print("ProcessDataFromGoogle: run for 0", e)
 
-                    except Exception as e:
-                        print("ProcessDataFromGoogle: run for 0", e)
+                # print("Number urls", len(_urls))
 
-                print("Number urls", len(_urls))
+                # google_html = html.escape(str(soup))
+                # print("********************************")
+                # print("get_data_google: 200")
+                # print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                # print("-------------------------")
+                # threading.Thread(
+                #     target=update_request_thuong_hieu_list,
+                #     args=(
+                #         id_rq_list,
+                #         str(sanitize_for_mysql(google_html)),
+                #         1,
+                #     ),
+                # ).start()
 
-                # time.sleep(99999)
-
-                # body = soup.find("body")
-                google_html = html.escape(str(soup))
-                print("********************************")
-                print("get_data_google: 200")
-                print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                print("-------------------------")
                 threading.Thread(
-                    target=update_request_thuong_hieu_list,
+                    target=self.update_data,
                     args=(
+                        self,
+                        _response,
                         id_rq_list,
-                        str(sanitize_for_mysql(google_html)),
-                        1,
                     ),
                 ).start()
 
@@ -122,6 +117,40 @@ class GetDataGoogle:
             print("get_data_google: 404")
             print("-------------------------")
             self.reload_usb()
+
+    def update_data(self, _response, id_rq_list):
+        soup = BeautifulSoup(_response, "html.parser")
+
+        urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
+
+        _urls = []
+        for url_ in urls:
+            try:
+                url_ = self.extract_url(url_)
+                if url_ is None:
+                    continue
+                if "google." not in url_ and self.is_valid_url(url_):
+                    _urls.append(url_)
+
+            except Exception as _:
+                continue
+
+        print("Number urls", len(_urls))
+
+        google_html = html.escape(str(soup))
+        print("********************************")
+        print("get_data_google: 200")
+        print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        print("-------------------------")
+
+        threading.Thread(
+            target=update_request_thuong_hieu_list,
+            args=(
+                id_rq_list,
+                str(sanitize_for_mysql(google_html)),
+                1,
+            ),
+        ).start()
 
     def is_valid_url(self, url):
         # Regular expression for validating URLs
