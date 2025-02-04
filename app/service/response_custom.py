@@ -19,7 +19,7 @@ def response_custom(url):
     data = {"url": url}
     headers = {"API-Key": api_key}
     # Gửi request POST tới API
-    response = requests.post(url_api, data=data, headers=headers)
+    response = requests.post(url_api, data=data, headers=headers, timeout=120)
     # Kiểm tra kết quả
     if response.status_code == 200:
         result = response.json()

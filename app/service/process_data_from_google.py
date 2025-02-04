@@ -60,6 +60,8 @@ class ProcessDataFromGoogle:
                 _urls = []
                 for url_ in urls:
                     try:
+                        if url_ is None:
+                            continue
                         if "google." not in url_ and self.is_valid_url(url_):
                             _urls.append(url_)
 
