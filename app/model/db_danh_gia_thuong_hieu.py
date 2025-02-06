@@ -119,9 +119,7 @@ def load_get_request_thuong_hieu_list():
             cursor = connection.cursor()
             cursor.execute(query)
             rows = cursor.fetchall()
-            # return rows
-            settings.DATA_CACHE[1] = rows
-            return settings.DATA_CACHE[1]
+            return rows
         except Error as e:
             print("get_request_thuong_hieu_list: unable_to_connect_to_mysql_to_add_data.", e)
         finally:
@@ -131,14 +129,7 @@ def load_get_request_thuong_hieu_list():
 
 
 def get_request_thuong_hieu_list():
-    if settings.DATA_CACHE[0] == []:
-        settings.DATA_CACHE[0] = time.time()
-        return load_get_request_thuong_hieu_list()
-    elif time.time() - settings.DATA_CACHE[0] > 3600:
-        print("clear cache")
-        return load_get_request_thuong_hieu_list()
-    else:
-        return settings.DATA_CACHE[1]
+    load_get_request_thuong_hieu_list()
 
 
 # def get_request_thuong_hieu_list_end():
@@ -171,11 +162,51 @@ def get_request_thuong_hieu_list():
 #             print("get_request_thuong_hieu_list_end: mysql_connection_has_been_closed.")
 
 
-def get_request_thuong_hieu_list_end():
+def check_id_thuong_hieu_run():
     connection = connect_to_mysql()
     if connection:
         try:
             query = """
+                SELECT  id_rq
+                FROM request_thuong_hieu_list
+                WHERE status = 1 AND google_html != '' 
+                GROUP By id_rq
+            """
+            cursor = connection.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+
+            _list_id_run = []
+
+            for i in rows:
+                _id_rq = i[0]
+                print("i", _id_rq)
+                query = f"""
+                SELECT COUNT(id_rq) FROM `request_thuong_hieu_list` WHERE google_html = '' AND id_rq = {_id_rq}
+                """
+                cursor = connection.cursor()
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                count_html_google = rows[0][0]
+                print("count html google", count_html_google)
+                if int(count_html_google) == 0:
+                    _list_id_run.append(_id_rq)
+
+            return _list_id_run
+
+        except Error as e:
+            print("error_while_executing_query:", e)
+        finally:
+            cursor.close()
+            connection.close()
+            print("check_id_thuong_hieu_run: mysql_connection_has_been_closed.")
+
+
+def get_request_thuong_hieu_list_end(id_rq):
+    connection = connect_to_mysql()
+    if connection:
+        try:
+            query = f"""
             SELECT id_rq_list, 
                 id_rq,
                 google_html,
@@ -184,7 +215,7 @@ def get_request_thuong_hieu_list_end():
                 
             FROM request_thuong_hieu_list
             
-            WHERE status = 1 AND google_html != '';
+            WHERE status = 1 AND google_html != '' AND id_rq = {id_rq};
             """
             cursor = connection.cursor()
             cursor.execute(query)

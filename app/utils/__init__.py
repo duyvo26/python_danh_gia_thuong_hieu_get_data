@@ -29,10 +29,8 @@ def check_ip():
 
         print("ip ip_now", ip_now)
         print("ip proxy", ip_proxy)
-
-        if ip_now == ip_proxy:
-            return False
-        else:
-            return True
-    except:  # noqa: E722
+    
+        return str(ip_now) == str(ip_proxy)
+    
+    except Exception as _:  # noqa: E722
         return False

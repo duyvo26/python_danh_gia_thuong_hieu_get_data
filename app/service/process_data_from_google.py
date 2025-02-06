@@ -5,106 +5,104 @@ from app.model.db_danh_gia_thuong_hieu import (
     get_brand_name,
     insert_data_thuong_hieu,
     update_request_thuong_hieu_list_end,
+    check_id_thuong_hieu_run,
 )
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from app.utils.compare_titles import CompareTitles
 from app.config import settings
 import time
-from app.service.response_custom import response_custom as _response_custom
 import requests
+import traceback
 
 
 class ProcessDataFromGoogle:
     def __init__(self):
         pass
 
-    def extract_url(self, input_str):
-        # Sử dụng regular expression để tìm URL
-        match = re.search(r"url\?q=(https?://[^\s&]+)", input_str)
-        if match:
-            return match.group(1)  # Trả về URL
-        return None  # Nếu không tìm thấy URL
-
     def run(self):
-        list_data = get_request_thuong_hieu_list_end()
-        print("len", len(list_data))
-        for i in list_data:
-            try:
-                id_rq_list = i[0]
-                id_rq = i[1]
-                html_page = i[2]
-                brand_name = get_brand_name(i[1])[0][4]
-                start_date_thuong_hieu = i[3]
-                end_date_thuong_hieu = i[4]
+        _id_rq_list = check_id_thuong_hieu_run()
+        print("_id_rq_list", _id_rq_list)
+        for _id_rq in _id_rq_list:
+            print("_id_rq", _id_rq)
+            list_data = get_request_thuong_hieu_list_end(_id_rq)
+            # print("list_data", list_data)
+            # print("len", len(list_data))
+            for i in list_data:
+                try:
+                    id_rq_list = i[0]
+                    id_rq = i[1]
+                    html_page = i[2]
+                    brand_name = get_brand_name(i[1])[0][4]
+                    start_date_thuong_hieu = i[3]
+                    end_date_thuong_hieu = i[4]
 
-                print("id_rq_list", id_rq_list)
-                print("id_rq", id_rq)
-                # print("html_page", html_page)
-                print("brand_name", brand_name)
-                print("start_date_thuong_hieu", start_date_thuong_hieu)
-                print("end_date_thuong_hieu", end_date_thuong_hieu)
+                    search_timeline = {
+                        "start_date_thuong_hieu": str(start_date_thuong_hieu),
+                        "end_date_thuong_hieu": str(end_date_thuong_hieu),
+                    }
 
-                search_timeline = {
-                    "start_date_thuong_hieu": str(start_date_thuong_hieu),
-                    "end_date_thuong_hieu": str(end_date_thuong_hieu),
-                }
+                    google_html = html.unescape(str(html_page))
+                    soup = BeautifulSoup(google_html, "html.parser")
+                    urls = list(set([self.extract_url(a.get("href")) for a in soup.find_all("a", href=True)]))
 
-                google_html = html.unescape(str(html_page))
-                soup = BeautifulSoup(google_html, "html.parser")
+                    _urls = []
+                    for url_ in urls:
+                        try:
+                            print("extract_url", url_)
+                            url_ = self.extract_url(url_)
+                            if url_ is None:
+                                continue
+                            if "google." not in url_ and self.is_valid_url(url_) is not None:
+                                _urls.append(url_)
+                        except Exception as e:
+                            print("ProcessDataFromGoogle: run for 0", e)
+                            traceback.print_exc()  # In chi tiết lỗi
 
-                urls = list(set([self.extract_url(a.get("href")) for a in soup.find_all("a", href=True)]))
+                    print("id_rq_list", id_rq_list)
+                    print("id_rq", id_rq)
+                    # print("html_page", html_page)
+                    print("brand_name", brand_name)
+                    print("start_date_thuong_hieu", start_date_thuong_hieu)
+                    print("end_date_thuong_hieu", end_date_thuong_hieu)
 
-                print("_urls", urls)
+                    print("_urls", _urls)
 
-                _urls = []
-                for url_ in urls:
-                    try:
-                        if url_ is None:
-                            continue
-                        if "google." not in url_ and self.is_valid_url(url_):
-                            _urls.append(url_)
+                    for url in _urls:
+                        try:
+                            print(url)
+                            data_web = self.get_html_page(url)
+                            # print("data_web", data_web)
+                            if data_web != 404:
+                                percent_same = CompareTitles().compare_text(brand_name, data_web[0])
+                                percent_same_full = CompareTitles().compare_text(brand_name, data_web[2])
+                                print("percent_same", percent_same)
+                                print("percent_same_full", percent_same_full)
 
-                    except Exception as e:
-                        print("ProcessDataFromGoogle: run for 0", e)
+                                if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
+                                    settings.BRAND_SIMILARITY_PERCENTAGE
+                                ):
+                                    insert_data_thuong_hieu(
+                                        id_rq=str(id_rq),
+                                        title=str(data_web[0]),
+                                        keyword=str(brand_name),
+                                        page_content=str(data_web[1]),
+                                        docs=str(data_web[2]),
+                                        search_timeline=str(search_timeline),
+                                    )
 
-                print("_urls", _urls)
+                        except Exception as e:
+                            print("ProcessDataFromGoogle: run for 1", e)
+                except Exception as e:
+                    print("EX", e)
+                    [time.sleep(1) or print("Null data:", _time) for _time in range(0, 5)]
+                    self.run()
 
-                for url in _urls:
-                    try:
-                        print(url)
-                        data_web = self.get_html_page(url)
-                        # print("data_web", data_web)
-                        if data_web != 404:
-                            percent_same = CompareTitles().compare_text(brand_name, data_web[0])
-                            percent_same_full = CompareTitles().compare_text(brand_name, data_web[2])
-                            print("percent_same", percent_same)
-                            print("percent_same_full", percent_same_full)
+                update_request_thuong_hieu_list_end(id_rq_list, 2)
+                print("no_record_found_with_id_rq_list")
 
-                            if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
-                                settings.BRAND_SIMILARITY_PERCENTAGE
-                            ):
-                                insert_data_thuong_hieu(
-                                    id_rq=str(id_rq),
-                                    title=str(data_web[0]),
-                                    keyword=str(brand_name),
-                                    page_content=str(data_web[1]),
-                                    docs=str(data_web[2]),
-                                    search_timeline=str(search_timeline),
-                                )
-
-                    except Exception as e:
-                        print("ProcessDataFromGoogle: run for 1", e)
-            except Exception as e:
-                print("EX", e)
-                [time.sleep(1) or print("Null data:", _time) for _time in range(0, 5)]
-                self.run()
-
-            update_request_thuong_hieu_list_end(id_rq_list, 2)
-            print("no_record_found_with_id_rq_list")
-
-        [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
-        self.run()
+            [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
+            self.run()
 
     def parse(self, content, url):
         """Phân tích nội dung và trích xuất thông tin."""
@@ -196,3 +194,14 @@ class ProcessDataFromGoogle:
 
         # If the URL matches the regular expression, return True
         return re.match(regex, url) is not None
+
+    def extract_url(self, input_string):
+        if input_string is None:
+            return None
+        if "http" in input_string or "https" in input_string:
+            # Tìm kiếm URL bắt đầu từ http hoặc https
+            match = re.search(r"https?://[^\s]+", input_string)
+            if match:
+                return match.group(0)
+            return None
+        return None

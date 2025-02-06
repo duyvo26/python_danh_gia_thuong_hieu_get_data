@@ -16,10 +16,6 @@ class GetDataGoogle:
     def __init__(self):
         pass
 
-    def get_ip(self):
-        ip = get("https://api.ipify.org").content.decode("utf8")
-        return ip
-
     def response_custom(self, url):
         try:
             return _response_custom(url)
@@ -29,11 +25,11 @@ class GetDataGoogle:
     def reload_usb(self):
         print("-reload_usb-")
         while True:
-            if check_ip():
-                break
-            [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 5)]
-
-        self.run(number=0, max_number=30)
+            [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 2)]
+            _check_ip = check_ip()
+            print(_check_ip)
+            if _check_ip is False:
+                self.run(number=0, max_number=30)
 
     def run(self, number=0, max_number=30):
         try:
@@ -58,38 +54,6 @@ class GetDataGoogle:
                     print("check tat ca fail")
                     self.reload_usb()
 
-                # soup = BeautifulSoup(_response, "html.parser")
-
-                # urls = list(set([a.get("href") for a in soup.find_all("a", href=True)]))
-
-                # _urls = []
-                # for url_ in urls:
-                #     try:
-                #         url_ = self.extract_url(url_)
-                #         if url_ is None:
-                #             continue
-                #         if "google." not in url_ and self.is_valid_url(url_):
-                #             _urls.append(url_)
-
-                #     except Exception as e:
-                #         print("ProcessDataFromGoogle: run for 0", e)
-
-                # print("Number urls", len(_urls))
-
-                # google_html = html.escape(str(soup))
-                # print("********************************")
-                # print("get_data_google: 200")
-                # print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                # print("-------------------------")
-                # threading.Thread(
-                #     target=update_request_thuong_hieu_list,
-                #     args=(
-                #         id_rq_list,
-                #         str(sanitize_for_mysql(google_html)),
-                #         1,
-                #     ),
-                # ).start()
-
                 threading.Thread(
                     target=self.update_data,
                     args=(
@@ -100,9 +64,11 @@ class GetDataGoogle:
 
                 number += 1
 
+                self.reload_usb()
+
             [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
 
-            self.run(number=0, max_number=30)
+            self.reload_usb()
 
         except Exception as _:
             print(_)
