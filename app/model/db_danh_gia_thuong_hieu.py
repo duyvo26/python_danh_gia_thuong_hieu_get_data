@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 from app.config import settings
 from datetime import datetime
+import time
 
 
 # Hàm kết nối đến cơ sở dữ liệu MySQL
@@ -98,31 +99,46 @@ def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_ti
 
 
 # Hàm lấy dữ liệu từ bảng request_thuong_hieu_list
-def get_request_thuong_hieu_list():
+
+
+def load_get_request_thuong_hieu_list():
+    print("--load_get_request_thuong_hieu_list--")
     connection = connect_to_mysql()
     if connection:
         try:
             query = """
-            SELECT request_thuong_hieu_list.*, 
-                request_thuong_hieu.name_thuong_hieu,
-                request_thuong_hieu_list.start_date_thuong_hieu,
-                request_thuong_hieu_list.end_date_thuong_hieu
-            FROM request_thuong_hieu_list
-            JOIN request_thuong_hieu 
-                ON request_thuong_hieu.id_rq = request_thuong_hieu_list.id_rq
-            WHERE request_thuong_hieu_list.status = 0 OR request_thuong_hieu_list.google_html = '';
-            """
+                SELECT request_thuong_hieu_list.*, 
+                    request_thuong_hieu.name_thuong_hieu,
+                    request_thuong_hieu_list.start_date_thuong_hieu,
+                    request_thuong_hieu_list.end_date_thuong_hieu
+                FROM request_thuong_hieu_list
+                JOIN request_thuong_hieu 
+                    ON request_thuong_hieu.id_rq = request_thuong_hieu_list.id_rq
+                WHERE request_thuong_hieu_list.status = 0 OR request_thuong_hieu_list.google_html = '';
+                """
             cursor = connection.cursor()
             cursor.execute(query)
             rows = cursor.fetchall()
-            return rows
-
+            # return rows
+            settings.DATA_CACHE[1] = rows
+            return settings.DATA_CACHE[1]
         except Error as e:
             print("get_request_thuong_hieu_list: unable_to_connect_to_mysql_to_add_data.", e)
         finally:
             cursor.close()
             connection.close()
             print("mysql_connection_has_been_closed.")
+
+
+def get_request_thuong_hieu_list():
+    if settings.DATA_CACHE[0] == []:
+        settings.DATA_CACHE[0] = time.time()
+        return load_get_request_thuong_hieu_list()
+    elif time.time() - settings.DATA_CACHE[0] > 3600:
+        print("clear cache")
+        return load_get_request_thuong_hieu_list()
+    else:
+        return settings.DATA_CACHE[1]
 
 
 # def get_request_thuong_hieu_list_end():

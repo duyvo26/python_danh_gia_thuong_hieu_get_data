@@ -9,6 +9,7 @@ from app.utils import sanitize_for_mysql
 from app.service.response_custom import response_custom as _response_custom
 import re
 from requests import get
+import requests
 
 
 class GetDataGoogle:
@@ -28,18 +29,29 @@ class GetDataGoogle:
     def reload_usb(self):
         print("-reload_usb-")
 
-        ip_old = self.get_ip()
+        # ip_old = self.get_ip()
 
-        threading.Thread(reset_wifi()).start()
-        [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 30)]
+        # # threading.Thread(reset_wifi()).start()
+        self.check_ip()
+        [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 10)]
+        self.check_ip()
 
-        ip_now = self.get_ip()
+        # ip_now = self.get_ip()
 
-        if ip_now == ip_old:
-            print("-IP EQUALS-")
-            self.reload_usb()
+        # if ip_now == ip_old:
+        #     print("-IP EQUALS-", ip_now, ip_old)
+        #     self.reload_usb()
 
         self.run(number=0, max_number=30)
+
+    def check_ip(self):
+        # Đảm bảo bạn đã cài PySocks: pip install PySocks
+        proxies = {"http": "socks5h://192.168.1.25:1080", "https": "socks5h://192.168.1.25:1080"}
+
+        response = requests.get("https://api.ipify.org", proxies=proxies)
+        print("ip proxy", response.text)
+        response = requests.get("https://api.ipify.org")
+        print("ip main", response.text)
 
     def run(self, number=0, max_number=30):
         try:
@@ -99,7 +111,6 @@ class GetDataGoogle:
                 threading.Thread(
                     target=self.update_data,
                     args=(
-                        self,
                         _response,
                         id_rq_list,
                     ),
@@ -140,6 +151,7 @@ class GetDataGoogle:
         google_html = html.escape(str(soup))
         print("********************************")
         print("get_data_google: 200")
+        self.check_ip()
         print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         print("-------------------------")
 

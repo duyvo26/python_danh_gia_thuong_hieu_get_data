@@ -19,5 +19,7 @@ class Settings:
     SERIAL_PORT = os.environ["SERIAL_PORT"]
     
     BRAND_SIMILARITY_PERCENTAGE = os.environ["BRAND_SIMILARITY_PERCENTAGE"]
+    
+    DATA_CACHE = [[], []]
 
 settings = Settings()
