@@ -27,10 +27,10 @@ class ProcessDataFromGoogle:
 
     def run(self):
         _id_rq_list = check_id_thuong_hieu_run()
-        print("_id_rq_list", _id_rq_list)
+        # print("_id_rq_list", _id_rq_list)
 
         for _id_rq in _id_rq_list:
-            print("_id_rq", _id_rq)
+            # print("_id_rq", _id_rq)
 
             list_data = get_request_thuong_hieu_list_end(_id_rq)
             # print("list_data", list_data)
@@ -54,6 +54,7 @@ class ProcessDataFromGoogle:
                     # urls = list(set([self.extract_url(a.get("href")) for a in soup.find_all("a", href=True)]))
 
                     urls = self.extract_webpage_urls_from_markdown(html_page)
+                    print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
 
                     if get_number_thuong_hieu(_id_rq) > int(os.environ["MAX_PAGE"]):
                         return 0
@@ -65,23 +66,31 @@ class ProcessDataFromGoogle:
                             url_ = self.extract_url(url_)
                             if url_ is None:
                                 continue
-                            if "google." not in url_ and self.is_valid_url(url_) is not None:
+
+                            # Bỏ qua link Google, Facebook, YouTube
+                            if (
+                                "google." not in url_
+                                and "facebook.com" not in url_
+                                and "youtube.com" not in url_
+                                and "youtu.be" not in url_
+                                and self.is_valid_url(url_) is not None
+                            ):
                                 _urls.append(url_)
                         except Exception as e:
                             print("ProcessDataFromGoogle: run for 0", e)
                             traceback.print_exc()  # In chi tiết lỗi
 
-                    print("id_rq_list", id_rq_list)
-                    print("id_rq", id_rq)
+                    # print("id_rq_list", id_rq_list)
+                    # print("id_rq", id_rq)
                     # print("html_page", html_page)
-                    print("brand_name", brand_name)
-                    print("start_date_thuong_hieu", start_date_thuong_hieu)
-                    print("end_date_thuong_hieu", end_date_thuong_hieu)
-
-                    print("_urls", _urls)
+                    # print("brand_name", brand_name)
+                    # print("start_date_thuong_hieu", start_date_thuong_hieu)
+                    # print("end_date_thuong_hieu", end_date_thuong_hieu
+                    # print("_urls", _urls)
 
                     for url in _urls:
                         try:
+                            print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
                             if get_number_thuong_hieu(_id_rq) > int(os.environ["MAX_PAGE"]):
                                 break
 
