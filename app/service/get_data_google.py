@@ -34,13 +34,15 @@ class GetDataGoogle:
     def run(self, number=0, max_number=30):
         try:
             list_data = get_request_thuong_hieu_list()
+            print("list_data", list_data)
             for data in list_data:
                 id_rq_list = data[0]
                 start_date_thuong_hieu = data[9].strftime("%Y-%m-%d") if isinstance(data[9], datetime) else str(data[9])
                 end_date_thuong_hieu = data[10].strftime("%Y-%m-%d") if isinstance(data[10], datetime) else str(data[10])
                 name_thuong_hieu = data[8].lower()
 
-                url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi"
+                url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi&tbm=nws"
+
                 print("url: ", url_thuong_hieu)
                 print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -48,11 +50,11 @@ class GetDataGoogle:
 
                 if _response is None:
                     print("_response None")
-                    self.reload_usb()
+                #     self.reload_usb()
 
-                if ">Tất cả".lower() not in _response.lower():
-                    print("check tat ca fail")
-                    self.reload_usb()
+                # if ">Tất cả".lower() not in _response.lower():
+                #     print("check tat ca fail")
+                #     self.reload_usb()
 
                 threading.Thread(
                     target=self.update_data,
@@ -64,11 +66,11 @@ class GetDataGoogle:
 
                 number += 1
 
-                self.reload_usb()
+                # self.reload_usb()
 
-            [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
+            # [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
 
-            self.reload_usb()
+            # self.reload_usb()
 
         except Exception as _:
             print(_)

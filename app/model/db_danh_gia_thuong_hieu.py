@@ -129,7 +129,7 @@ def load_get_request_thuong_hieu_list():
 
 
 def get_request_thuong_hieu_list():
-    load_get_request_thuong_hieu_list()
+    return load_get_request_thuong_hieu_list()
 
 
 # def get_request_thuong_hieu_list_end():
