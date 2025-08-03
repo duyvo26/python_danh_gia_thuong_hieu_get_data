@@ -1,16 +1,19 @@
-import time
+# import time
 from datetime import datetime
-from app.service.reset_wifi import reset_wifi
+
+# from app.service.reset_wifi import reset_wifi
 import threading
-import html
+
+# import html
 from app.model.db_danh_gia_thuong_hieu import get_request_thuong_hieu_list, update_request_thuong_hieu_list
-from bs4 import BeautifulSoup
-from app.utils import sanitize_for_mysql
+
+# from bs4 import BeautifulSoup
+# from app.utils import sanitize_for_mysql
 from app.service.response_custom import response_custom as _response_custom
 import re
-from requests import get
-from app.utils import check_ip
-import re
+# from requests import get
+# from app.utils import check_ip
+# import re
 
 
 class GetDataGoogle:
@@ -19,7 +22,7 @@ class GetDataGoogle:
 
     def response_custom(self, url):
         try:
-            return _response_custom(url)
+            return _response_custom(url, True)
         except Exception as _:
             return None
 

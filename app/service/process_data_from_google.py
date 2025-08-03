@@ -1,18 +1,23 @@
 import re
-import html
+
+# import html
 from app.model.db_danh_gia_thuong_hieu import (
     get_request_thuong_hieu_list_end,
     get_brand_name,
     insert_data_thuong_hieu,
     update_request_thuong_hieu_list_end,
     check_id_thuong_hieu_run,
+    get_number_thuong_hieu,
 )
 from bs4 import BeautifulSoup
-from bs4.element import Comment
-from app.utils.compare_titles import CompareTitles
+
+# from bs4.element import Comment
+# from app.utils.compare_titles import CompareTitles
 from app.config import settings
 import time
-import requests
+import os
+
+# import requests
 import traceback
 
 
@@ -22,9 +27,11 @@ class ProcessDataFromGoogle:
 
     def run(self):
         _id_rq_list = check_id_thuong_hieu_run()
-        # print("_id_rq_list", _id_rq_list)
+        print("_id_rq_list", _id_rq_list)
+
         for _id_rq in _id_rq_list:
             print("_id_rq", _id_rq)
+
             list_data = get_request_thuong_hieu_list_end(_id_rq)
             # print("list_data", list_data)
             # print("len", len(list_data))
@@ -47,6 +54,9 @@ class ProcessDataFromGoogle:
                     # urls = list(set([self.extract_url(a.get("href")) for a in soup.find_all("a", href=True)]))
 
                     urls = self.extract_webpage_urls_from_markdown(html_page)
+
+                    if get_number_thuong_hieu(_id_rq) > int(os.environ["MAX_PAGE"]):
+                        return 0
 
                     _urls = []
                     for url_ in urls:
@@ -72,6 +82,9 @@ class ProcessDataFromGoogle:
 
                     for url in _urls:
                         try:
+                            if get_number_thuong_hieu(_id_rq) > int(os.environ["MAX_PAGE"]):
+                                break
+
                             print(url)
                             data_web = self.response_custom(url)
                             # print("data_web", data_web)
@@ -84,6 +97,7 @@ class ProcessDataFromGoogle:
                                 # if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
                                 #     settings.BRAND_SIMILARITY_PERCENTAGE
                                 # ):
+
                                 insert_data_thuong_hieu(
                                     id_rq=str(id_rq),
                                     title="",

@@ -54,6 +54,29 @@ def connect_to_mysql():
 #         print("unable_to_connect_to_mysql_to_add_data.")
 
 
+def get_number_thuong_hieu(id_rq):
+    connection = connect_to_mysql()
+    if not connection:
+        print("Không kết nối được MySQL")
+        return 0
+
+    try:
+        cursor = connection.cursor()
+        query = """
+            SELECT COUNT(*) FROM `data_thuong_hieu`
+            WHERE `id_rq` = %s
+        """
+        cursor.execute(query, (id_rq,))
+        result = cursor.fetchone()
+        return result[0] if result else 0
+    except Error as e:
+        print("Lỗi truy vấn:", e)
+        return 0
+    finally:
+        cursor.close()
+        connection.close()
+
+
 def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_timeline):
     connection = connect_to_mysql()
     if connection:

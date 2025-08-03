@@ -51,12 +51,11 @@ def get_proxy_config_from_env():
 
 
 async def crawl4ai_run(url, proxy=False):
-
     if proxy:
         print(f"Đang dùng proxy")  # noqa: F541
 
         proxy_config = get_proxy_config_from_env()
-        
+
         browser_config = BrowserConfig(  # noqa: F405
             proxy_config=proxy_config,
             headless=True,  # Thêm nếu bạn muốn chạy headless như bên `main`
