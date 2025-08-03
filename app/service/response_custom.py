@@ -33,15 +33,75 @@ def check_captcha(html):
 #             return None
 
 
+import asyncio
+from crawl4ai import *  # noqa: F403
+import aiofiles
+import time
+from urllib.parse import urlparse
+from app.config import settings
+import os
 
 
+def get_proxy_config_from_env():
+    return ProxyConfig(  # noqa: F405
+        server=f"http://{os.getenv('PROXY_HOST')}:{os.getenv('PROXY_PORT')}",
+        username=os.getenv("PROXY_USERNAME"),
+        password=os.getenv("PROXY_PASSWORD"),
+    )
 
 
-def response_custom(url):
+async def crawl4ai_run(url, proxy=False):
+
+    if proxy:
+        print(f"Đang dùng proxy")  # noqa: F541
+
+        proxy_config = get_proxy_config_from_env()
+        
+        browser_config = BrowserConfig(  # noqa: F405
+            proxy_config=proxy_config,
+            headless=True,  # Thêm nếu bạn muốn chạy headless như bên `main`
+        )
+    else:
+        browser_config = BrowserConfig(  # noqa: F405
+            headless=True,  # Thêm nếu bạn muốn chạy headless như bên `main`
+        )
+
+    async with AsyncWebCrawler(config=browser_config) as crawler:  # noqa: F405
+        result = await crawler.arun(
+            url=url,
+            config=CrawlerRunConfig(  # noqa: F405
+                cache_mode=CacheMode.BYPASS  # noqa: F405
+            ),
+        )
+        markdown_content = result.markdown
+
+        # Tạo tên file động
+        timestamp = int(time.time())
+        domain = urlparse(url).netloc.replace(".", "_")
+        filename = f"{domain}_{timestamp}.md"
+        path_file = os.path.join(settings.DIR_ROOT, "utils", "web", filename)
+
+        async with aiofiles.open(path_file, mode="w", encoding="utf-8") as f:
+            await f.write(markdown_content)
+
+        return markdown_content
+
+
+def response_custom(url, proxy=False):
     try:
-        r = requests.get(url, timeout=10)  # Thêm timeout để tránh treo chương trình
-        r.raise_for_status()  # Kiểm tra lỗi HTTP
-        return r.text
-    except requests.RequestException as e:  # Bắt các lỗi liên quan đến HTTP
+        # Gọi crawl4ai_run từ def
+        crawl_result = asyncio.run(crawl4ai_run(url, proxy))
+        return crawl_result
+    except requests.RequestException as e:
         print(f"Lỗi khi gửi yêu cầu: {e}")
         return None
+
+
+# def response_custom(url):
+#     try:
+#         r = requests.get(url, timeout=10)  # Thêm timeout để tránh treo chương trình
+#         r.raise_for_status()  # Kiểm tra lỗi HTTP
+#         return r.text
+#     except requests.RequestException as e:  # Bắt các lỗi liên quan đến HTTP
+#         print(f"Lỗi khi gửi yêu cầu: {e}")
+#         return None
