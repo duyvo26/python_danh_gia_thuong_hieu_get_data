@@ -12,10 +12,11 @@ from app.model.db_danh_gia_thuong_hieu import (
 from bs4 import BeautifulSoup
 
 # from bs4.element import Comment
-# from app.utils.compare_titles import CompareTitles
+from app.utils.compare_titles import CompareTitles
 from app.config import settings
 import time
 import os
+from app.service.response_custom import response_custom as _response_custom
 
 # import requests
 import traceback
@@ -57,12 +58,12 @@ class ProcessDataFromGoogle:
                     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
 
                     if get_number_thuong_hieu(_id_rq) > int(os.environ["MAX_PAGE"]):
-                        return 0
+                        break
 
                     _urls = []
                     for url_ in urls:
                         try:
-                            print("extract_url", url_)
+                            # print("extract_url", url_)
                             url_ = self.extract_url(url_)
                             if url_ is None:
                                 continue
@@ -73,6 +74,7 @@ class ProcessDataFromGoogle:
                                 and "facebook.com" not in url_
                                 and "youtube.com" not in url_
                                 and "youtu.be" not in url_
+                                and "tiktok." not in url_
                                 and self.is_valid_url(url_) is not None
                             ):
                                 _urls.append(url_)
@@ -96,25 +98,26 @@ class ProcessDataFromGoogle:
 
                             print(url)
                             data_web = self.response_custom(url)
+
                             # print("data_web", data_web)
                             if data_web != 404:
-                                # percent_same = CompareTitles().compare_text(brand_name, data_web[0])
+                                percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
                                 # percent_same_full = CompareTitles().compare_text(brand_name, data_web[2])
-                                # print("percent_same", percent_same)
+                                print("percent_same", percent_same)
+                                print(data_web["meta"]["title"], "|", brand_name)
                                 # print("percent_same_full", percent_same_full)
 
-                                # if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or int(percent_same_full) > int(
-                                #     settings.BRAND_SIMILARITY_PERCENTAGE
-                                # ):
+                                if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE):
+                                    # time.sleep(99999)
 
-                                insert_data_thuong_hieu(
-                                    id_rq=str(id_rq),
-                                    title="",
-                                    keyword="",
-                                    page_content="",
-                                    docs=data_web,
-                                    search_timeline=str(search_timeline),
-                                )
+                                    insert_data_thuong_hieu(
+                                        id_rq=str(id_rq),
+                                        title=data_web["meta"]["title"],
+                                        keyword=data_web["meta"]["keywords"],
+                                        page_content=url,
+                                        docs=str(data_web),
+                                        search_timeline=str(search_timeline),
+                                    )
 
                         except Exception as e:
                             print("ProcessDataFromGoogle: run for 1", e)
@@ -157,8 +160,6 @@ class ProcessDataFromGoogle:
         }
 
     def response_custom(self, url):
-        from app.service.response_custom import response_custom as _response_custom
-
         try:
             return _response_custom(url)
         except Exception as _:

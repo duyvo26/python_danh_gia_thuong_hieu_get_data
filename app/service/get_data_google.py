@@ -39,32 +39,34 @@ class GetDataGoogle:
         try:
             list_data = get_request_thuong_hieu_list()
             # print("list_data", list_data[0])
-            print("list_data", len(list_data))
+            # print("list_data", len(list_data))
             for data in list_data:
-                print(data)
+                # print(data)
                 id_rq_list = data[0]
+                print("********************************")
                 print("id_rq_list", id_rq_list)
+                print("********************************")
                 start_date_thuong_hieu = data[2].strftime("%Y-%m-%d") if isinstance(data[2], datetime) else str(data[2])
                 end_date_thuong_hieu = data[3].strftime("%Y-%m-%d") if isinstance(data[3], datetime) else str(data[3])
                 name_thuong_hieu = data[8].lower()
 
-                print(start_date_thuong_hieu)
-                print(end_date_thuong_hieu)
-                print(name_thuong_hieu)
+                # print(start_date_thuong_hieu)
+                # print(end_date_thuong_hieu)
+                # print(name_thuong_hieu)
 
                 # time.sleep(99999)
+                # url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi&tbm=nws"
 
-                url_thuong_hieu = (
-                    f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}"
-                )
+                url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi"
 
-                print("url: ", url_thuong_hieu)
-                print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                # # print("url: ", url_thuong_hieu)
+                # print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                 _response = self.response_custom(url_thuong_hieu)
+                # print(_response)
 
                 if "CAPTCHA" in _response and "robot" in _response:
-                    print(_response)
+                    # print(_response)
                     print("ERR CAPTCHA")
                     return 0
 
@@ -81,7 +83,7 @@ class GetDataGoogle:
                 threading.Thread(
                     target=self.update_data,
                     args=(
-                        _response,
+                        _response["markdown"],
                         id_rq_list,
                     ),
                 ).start()
@@ -100,7 +102,7 @@ class GetDataGoogle:
             print(_)
             print("********************************")
             print("get_data_google: 404")
-            print("-------------------------")
+            print("********************************")
             # self.reload_usb()
 
     def count_urls_from_markdown_content(self, content):

@@ -143,21 +143,22 @@ JOIN
 JOIN 
     (
         SELECT 
-            MAX(id_rq_list) AS max_id
+            MAX(rtl_sub.id_rq_list) AS max_id
         FROM 
             request_thuong_hieu_list rtl_sub
         JOIN 
             request_thuong_hieu rt_sub 
             ON rt_sub.id_rq = rtl_sub.id_rq
         WHERE 
-            rtl_sub.status = 0 
-            OR rtl_sub.google_html = ''
+            (rtl_sub.status = 0 OR rtl_sub.google_html = '')
         GROUP BY 
             rt_sub.email, 
             rtl_sub.start_date_thuong_hieu, 
             rtl_sub.end_date_thuong_hieu
     ) latest 
     ON latest.max_id = rtl.id_rq_list
+WHERE 
+    rt.status = 0
 
                 """
             cursor = connection.cursor()

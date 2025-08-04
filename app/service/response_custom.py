@@ -1,4 +1,12 @@
 import requests
+import asyncio
+from crawl4ai import *  # noqa: F403
+import aiofiles
+import time
+from urllib.parse import urlparse
+from app.config import settings
+import os
+from bs4 import BeautifulSoup
 
 
 def check_captcha(html):
@@ -11,37 +19,6 @@ def check_captcha(html):
     return True
 
 
-# def response_custom(url):
-#     url_api = "http://localhost:8000/base/get-html/"  # URL của API
-#     api_key = "T0wq2yjazJmln2BRAFTysWNsp7PcZGyAPIMF7i7EWeEniAYv9GbZC81thedolHGu"  # Thay thế bằng API key của bạn
-
-#     # Tạo payload cho request
-#     data = {"url": url}
-#     headers = {"API-Key": api_key}
-#     # Gửi request POST tới API
-#     response = requests.post(url_api, data=data, headers=headers, timeout=120)
-#     # Kiểm tra kết quả
-#     if response.status_code == 200:
-#         result = response.json()
-#         print(result["status_code"] == 200, result["status_code"])
-#         if result["status_code"] == 200:
-#             # Tạo một response giả để trả kết quả đúng định dạng
-#             if check_captcha(result["html"]) is True:
-#                 return result["html"]
-#             return None
-#         else:
-#             return None
-
-
-import asyncio
-from crawl4ai import *  # noqa: F403
-import aiofiles
-import time
-from urllib.parse import urlparse
-from app.config import settings
-import os
-
-
 def get_proxy_config_from_env():
     return ProxyConfig(  # noqa: F405
         server=f"http://{os.getenv('PROXY_HOST')}:{os.getenv('PROXY_PORT')}",
@@ -50,20 +27,15 @@ def get_proxy_config_from_env():
     )
 
 
-async def crawl4ai_run(url, proxy=False):
-    if proxy:
-        print(f"Đang dùng proxy")  # noqa: F541
+async def crawl4ai_run_proxy(url, proxy=False):
+    print(f"Đang dùng proxy")  # noqa: F541
 
-        proxy_config = get_proxy_config_from_env()
+    proxy_config = get_proxy_config_from_env()
 
-        browser_config = BrowserConfig(  # noqa: F405
-            proxy_config=proxy_config,
-            headless=True,  # Thêm nếu bạn muốn chạy headless như bên `main`
-        )
-    else:
-        browser_config = BrowserConfig(  # noqa: F405
-            headless=True,  # Thêm nếu bạn muốn chạy headless như bên `main`
-        )
+    browser_config = BrowserConfig(  # noqa: F405
+        proxy_config=proxy_config,
+        headless=True,
+    )
 
     async with AsyncWebCrawler(config=browser_config) as crawler:  # noqa: F405
         result = await crawler.arun(
@@ -72,7 +44,11 @@ async def crawl4ai_run(url, proxy=False):
                 cache_mode=CacheMode.BYPASS  # noqa: F405
             ),
         )
+
         markdown_content = result.markdown
+        html_content = result.html  # 👈 Phải có html mới parse meta được!
+
+        meta = extract_meta(html_content)
 
         # Tạo tên file động
         timestamp = int(time.time())
@@ -83,24 +59,69 @@ async def crawl4ai_run(url, proxy=False):
         async with aiofiles.open(path_file, mode="w", encoding="utf-8") as f:
             await f.write(markdown_content)
 
-        return markdown_content
+        return {
+            "markdown": markdown_content,
+            "meta": meta,
+        }
+
+
+async def crawl4ai_run(url):
+    async with AsyncWebCrawler() as crawler:  # noqa: F405
+        result = await crawler.arun(
+            url=url,
+            config=CrawlerRunConfig(  # noqa: F405
+                cache_mode=CacheMode.BYPASS  # noqa: F405
+            ),
+        )
+
+        markdown_content = result.markdown
+        html_content = result.html
+
+        meta = extract_meta(html_content)
+
+        # Tạo tên file động
+        timestamp = int(time.time())
+        domain = urlparse(url).netloc.replace(".", "_")
+        filename = f"{domain}_{timestamp}.md"
+        path_file = os.path.join(settings.DIR_ROOT, "utils", "web", filename)
+
+        async with aiofiles.open(path_file, mode="w", encoding="utf-8") as f:
+            await f.write(markdown_content)
+
+        return {
+            "markdown": markdown_content,
+            "meta": meta,
+        }
+
+
+def extract_meta(html):
+    soup = BeautifulSoup(html, "html.parser")
+    title = soup.title.string.strip() if soup.title else ""
+    description = ""
+    keywords = ""
+
+    desc_tag = soup.find("meta", attrs={"name": "description"})
+    if desc_tag:
+        description = desc_tag.get("content", "")
+
+    keywords_tag = soup.find("meta", attrs={"name": "keywords"})
+    if keywords_tag:
+        keywords = keywords_tag.get("content", "")
+
+    return {
+        "title": title,
+        "description": description,
+        "keywords": keywords,
+    }
 
 
 def response_custom(url, proxy=False):
     try:
-        # Gọi crawl4ai_run từ def
-        crawl_result = asyncio.run(crawl4ai_run(url, proxy))
+        if proxy:
+            crawl_result = asyncio.run(crawl4ai_run_proxy(url))
+        else:
+            crawl_result = asyncio.run(crawl4ai_run(url))
         return crawl_result
-    except requests.RequestException as e:
+    except Exception as e:
         print(f"Lỗi khi gửi yêu cầu: {e}")
         return None
-
-
-# def response_custom(url):
-#     try:
-#         r = requests.get(url, timeout=10)  # Thêm timeout để tránh treo chương trình
-#         r.raise_for_status()  # Kiểm tra lỗi HTTP
-#         return r.text
-#     except requests.RequestException as e:  # Bắt các lỗi liên quan đến HTTP
-#         print(f"Lỗi khi gửi yêu cầu: {e}")
-#         return None

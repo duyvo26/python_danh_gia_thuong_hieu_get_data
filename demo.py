@@ -26,19 +26,11 @@ from crawl4ai.async_configs import BrowserConfig, ProxyConfig
 
 
 async def main():
-    browser_config = BrowserConfig(
-        proxy_config=ProxyConfig(
-            server="http://42.96.10.198:8194",
-            username="CINE66Q4duyvo",
-            password="P7qWPJTd"
-        ),
-        headless=True,
-)
 
 
-    async with AsyncWebCrawler(config=browser_config) as crawler:
+    async with AsyncWebCrawler() as crawler:
         result = await crawler.arun(
-            url="https://vuonsamvodung.com",
+            url="http://www.acecookvietnam.vn/",
         )
         print(result.markdown)
 
