@@ -65,7 +65,12 @@ class GetDataGoogle:
                 _response = self.response_custom(url_thuong_hieu)
                 # print(_response)
 
-                if "https://support.google.com/websearch/answer/86640" in _response:
+                if (
+                    "https://support.google.com/websearch/answer/86640" in _response["markdown"]
+                    or "Địa chỉ IP:" in _response["markdown"]
+                    or "(https://www.google.com/policies/terms/)" in _response["markdown"]
+                    or "CAPTCHA" in _response["markdown"]
+                ):
                     # print(_response)
                     print("ERR CAPTCHA")
                     return 0
