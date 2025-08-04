@@ -45,26 +45,29 @@ class ProcessDataFromGoogle:
                     start_date_thuong_hieu = i[3]
                     end_date_thuong_hieu = i[4]
 
+                    print("id_rq_list", id_rq_list)
                     search_timeline = {
                         "start_date_thuong_hieu": str(start_date_thuong_hieu),
                         "end_date_thuong_hieu": str(end_date_thuong_hieu),
                     }
 
-                    # google_html = html.unescape(str(html_page))
-                    # soup = BeautifulSoup(google_html, "html.parser")
-                    # urls = list(set([self.extract_url(a.get("href")) for a in soup.find_all("a", href=True)]))
-
-                    urls = self.extract_webpage_urls_from_markdown(html_page)
                     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
 
-                    if get_number_thuong_hieu(_id_rq) > int(os.environ["MAX_PAGE"]):
+                    if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
+                        update_request_thuong_hieu_list_end(id_rq_list, 2)
                         break
+
+                    urls = self.extract_urls_from_parentheses(html_page)
+
+                    print("urls", len(urls))
+                    # print("urls", (urls))
 
                     _urls = []
                     for url_ in urls:
                         try:
-                            # print("extract_url", url_)
                             url_ = self.extract_url(url_)
+                            # print("extract_url", url_)
+
                             if url_ is None:
                                 continue
 
@@ -82,18 +85,15 @@ class ProcessDataFromGoogle:
                             print("ProcessDataFromGoogle: run for 0", e)
                             traceback.print_exc()  # In chi tiết lỗi
 
-                    # print("id_rq_list", id_rq_list)
-                    # print("id_rq", id_rq)
-                    # print("html_page", html_page)
-                    # print("brand_name", brand_name)
-                    # print("start_date_thuong_hieu", start_date_thuong_hieu)
-                    # print("end_date_thuong_hieu", end_date_thuong_hieu
-                    # print("_urls", _urls)
+                    print("LEN URL", len(_urls))
+                    # print("URL", (_urls))
 
+                    # time.sleep(9999)
                     for url in _urls:
                         try:
                             print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
-                            if get_number_thuong_hieu(_id_rq) > int(os.environ["MAX_PAGE"]):
+                            if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
+                                update_request_thuong_hieu_list_end(id_rq_list, 2)
                                 break
 
                             print(url)
@@ -195,12 +195,13 @@ class ProcessDataFromGoogle:
         url_count = len(urls)
         return url_count
 
-    def extract_webpage_urls_from_markdown(self, markdown_content: str) -> list:
+    def extract_urls_from_parentheses(self, markdown_content: str) -> list:
         """
-        Lấy URL web page từ markdown, bỏ link trỏ file.
+        Bắt TẤT CẢ URL nằm trong dấu ngoặc đơn (), bất kể cú pháp markdown.
         """
-        # Regex bắt tất cả URL trong [text](URL) và ![alt](URL)
-        pattern = r"!?\[.*?\]\((https?://[^\)]+)\)"
+        import re
+
+        pattern = r"\((https?://[^\)]+)\)"
         urls = re.findall(pattern, markdown_content)
 
         # Các đuôi file cần loại
@@ -236,7 +237,5 @@ class ProcessDataFromGoogle:
             ".xml",
         )
 
-        # Lọc: chỉ lấy link KHÔNG kết thúc bằng đuôi file
         urls_web = [url for url in urls if not url.lower().split("?")[0].endswith(file_exts)]
-
         return urls_web

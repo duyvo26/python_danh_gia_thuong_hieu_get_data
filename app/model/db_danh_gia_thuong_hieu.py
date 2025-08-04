@@ -16,7 +16,7 @@ def connect_to_mysql():
             password=settings.PASSWORD,  # Mật khẩu
         )
         if connection.is_connected():
-            print("successful_connection_to_mysql!")
+            # print("successful_connection_to_mysql!")
             return connection
     except Error as e:
         print("error_connecting_to_mysql:", e)

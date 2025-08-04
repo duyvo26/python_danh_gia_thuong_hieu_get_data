@@ -65,7 +65,7 @@ class GetDataGoogle:
                 _response = self.response_custom(url_thuong_hieu)
                 # print(_response)
 
-                if "CAPTCHA" in _response and "robot" in _response:
+                if "https://support.google.com/websearch/answer/86640" in _response:
                     # print(_response)
                     print("ERR CAPTCHA")
                     return 0
