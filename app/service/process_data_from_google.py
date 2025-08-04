@@ -107,7 +107,7 @@ class ProcessDataFromGoogle:
                                 print(data_web["meta"]["title"], "|", brand_name)
                                 # print("percent_same_full", percent_same_full)
 
-                                if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE):
+                                if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or brand_name in data_web["meta"]["title"]:
                                     # time.sleep(99999)
 
                                     insert_data_thuong_hieu(
