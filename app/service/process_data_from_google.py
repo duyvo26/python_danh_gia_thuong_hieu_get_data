@@ -114,6 +114,7 @@ class ProcessDataFromGoogle:
                                 and "youtube.com" not in url_
                                 and "youtu.be" not in url_
                                 and "tiktok." not in url_
+                                and "topcv." not in url_
                                 and self.is_valid_url(url_) is not None
                             ):
                                 _urls.append(url_)
