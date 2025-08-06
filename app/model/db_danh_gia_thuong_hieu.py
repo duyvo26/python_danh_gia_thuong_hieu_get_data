@@ -206,7 +206,7 @@ JOIN
     ) latest 
     ON latest.max_id = rtl.id_rq_list
 WHERE 
-    rt.status = 1
+    rt.status = 0
 
                 """
             cursor = connection.cursor()

@@ -46,8 +46,6 @@ def kiem_tra_tieu_de_giong_van_de(ten_van_de: str, tieu_de: str) -> bool:
     return response["choices"][0]["message"]["content"].strip().lower() == "true"
 
 
-
-
 class ProcessDataFromGoogle:
     def __init__(self):
         pass
@@ -83,10 +81,9 @@ class ProcessDataFromGoogle:
         except Exception as e:
             print(f"Lỗi xử lý URL {url}: {e}")
 
-
     def run(self):
         _id_rq_list = check_id_thuong_hieu_run()
-        
+
         for _id_rq in _id_rq_list:
             list_data = get_request_thuong_hieu_list_end(_id_rq)
             for i in list_data:
@@ -123,48 +120,43 @@ class ProcessDataFromGoogle:
                         except Exception as e:
                             print("ProcessDataFromGoogle: run for 0", e)
                             traceback.print_exc()  # In chi tiết lỗi
-                            
-                            
 
-                    with ThreadPoolExecutor(max_workers=5) as executor:
-                            futures = [
-                                executor.submit(self.handle_url, url, brand_name, id_rq, _id_rq, search_timeline)
-                                for url in _urls
-                            ]
-                            for future in as_completed(futures):
-                                future.result()  # bắt lỗi nếu có
-                                
+                    with ThreadPoolExecutor(max_workers=10) as executor:
+                        futures = [executor.submit(self.handle_url, url, brand_name, id_rq, _id_rq, search_timeline) for url in _urls]
+                        for future in as_completed(futures):
+                            future.result()  # bắt lỗi nếu có
+
                     # for url in _urls:
-                        # try:
-                        #     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
-                        #     print(url)
-                        #     data_web = self.response_custom(url)
-                        #     if data_web != 404:
-                        #         percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
-                        #         print("percent_same", percent_same)
-                        #         if "images (" in data_web["meta"]["title"]:
-                        #             continue
-                        #         print(data_web["meta"]["title"], "|", brand_name)
-                        #         llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
+                    # try:
+                    #     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
+                    #     print(url)
+                    #     data_web = self.response_custom(url)
+                    #     if data_web != 404:
+                    #         percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
+                    #         print("percent_same", percent_same)
+                    #         if "images (" in data_web["meta"]["title"]:
+                    #             continue
+                    #         print(data_web["meta"]["title"], "|", brand_name)
+                    #         llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
 
-                        #         print("---llm_check_title---", llm_check_title)
+                    #         print("---llm_check_title---", llm_check_title)
 
-                        #         if (
-                        #             (llm_check_title)
-                        #             or (int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE))
-                        #             or (brand_name in data_web["meta"]["title"])
-                        #         ):
-                        #             insert_data_thuong_hieu(
-                        #                 id_rq=str(id_rq),
-                        #                 title=data_web["meta"]["title"],
-                        #                 keyword=data_web["meta"]["keywords"],
-                        #                 page_content=url,
-                        #                 docs=str(data_web),
-                        #                 search_timeline=str(search_timeline),
-                        #             )
+                    #         if (
+                    #             (llm_check_title)
+                    #             or (int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE))
+                    #             or (brand_name in data_web["meta"]["title"])
+                    #         ):
+                    #             insert_data_thuong_hieu(
+                    #                 id_rq=str(id_rq),
+                    #                 title=data_web["meta"]["title"],
+                    #                 keyword=data_web["meta"]["keywords"],
+                    #                 page_content=url,
+                    #                 docs=str(data_web),
+                    #                 search_timeline=str(search_timeline),
+                    #             )
 
-                        # except Exception as e:
-                        #     print("ProcessDataFromGoogle: run for 1", e)
+                    # except Exception as e:
+                    #     print("ProcessDataFromGoogle: run for 1", e)
                 except Exception as e:
                     print("EX", e)
                     [time.sleep(1) or print("Null data:", _time) for _time in range(0, 5)]
