@@ -34,7 +34,7 @@ def get_request_thuong_hieu_chua_tao_list():
     query = """
         SELECT *
         FROM request_thuong_hieu
-        WHERE status = 0
+        WHERE status = 1
         AND id_rq NOT IN (
             SELECT DISTINCT id_rq FROM request_thuong_hieu_list
         )
@@ -211,7 +211,7 @@ JOIN
     ) latest 
     ON latest.max_id = rtl.id_rq_list
 WHERE 
-    rt.status = 0
+    rt.status = 1
 
                 """
             cursor = connection.cursor()
