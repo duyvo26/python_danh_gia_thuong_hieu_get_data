@@ -95,7 +95,7 @@ class GetDataGoogle:
 
                 number += 1
 
-                [time.sleep(1) or print("sleep:", _time) for _time in range(0, 4)]
+                [time.sleep(1) or print("sleep:", _time) for _time in range(0, 15)]
 
                 # self.reload_usb()
 
@@ -115,6 +115,9 @@ class GetDataGoogle:
         urls = re.findall(r"(https?://[^\s\)]+)", content)
         url_count = len(urls)
         return url_count
+
+
+
 
     def update_data(self, _response, id_rq_list):
         # soup = BeautifulSoup(_response, "html.parser")

@@ -22,6 +22,29 @@ from app.service.response_custom import response_custom as _response_custom
 import traceback
 
 
+import openai
+
+
+def kiem_tra_tieu_de_giong_van_de(ten_van_de: str, tieu_de: str) -> bool:
+    openai.api_key = os.environ["KEY_API_OPENAI"]
+
+    response = openai.ChatCompletion.create(
+        model=os.environ["OPENAI_LLM_MODEL_NAME"],
+        temperature=0,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Bạn là một trợ lý AI. Nhiệm vụ của bạn là kiểm tra xem tiêu đề có đang nói về  thương hiệu đó không. "
+                    "Chỉ trả lời đúng một từ 'true' hoặc 'false', không thêm giải thích."
+                ),
+            },
+            {"role": "user", "content": f"Tên thương hiệu: {ten_van_de}\nTiêu đề bài viết: {tieu_de}"},
+        ],
+    )
+    return response["choices"][0]["message"]["content"].strip().lower() == "true"
+
+
 class ProcessDataFromGoogle:
     def __init__(self):
         pass
@@ -53,9 +76,9 @@ class ProcessDataFromGoogle:
 
                     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
 
-                    if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
-                        update_request_thuong_hieu_list_end(id_rq_list, 2)
-                        break
+                    # if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
+                    #     update_request_thuong_hieu_list_end(id_rq_list, 2)
+                    #     break
 
                     urls = self.extract_urls_from_parentheses(html_page)
 
@@ -92,9 +115,9 @@ class ProcessDataFromGoogle:
                     for url in _urls:
                         try:
                             print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
-                            if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
-                                update_request_thuong_hieu_list_end(id_rq_list, 2)
-                                break
+                            # if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
+                            #     update_request_thuong_hieu_list_end(id_rq_list, 2)
+                            #     break
 
                             print(url)
                             data_web = self.response_custom(url)
@@ -104,10 +127,19 @@ class ProcessDataFromGoogle:
                                 percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
                                 # percent_same_full = CompareTitles().compare_text(brand_name, data_web[2])
                                 print("percent_same", percent_same)
+                                if "images (" in data_web["meta"]["title"]:
+                                    continue
                                 print(data_web["meta"]["title"], "|", brand_name)
                                 # print("percent_same_full", percent_same_full)
+                                llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
 
-                                if int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE) or brand_name in data_web["meta"]["title"]:
+                                print("---llm_check_title---", llm_check_title)
+
+                                if (
+                                    (llm_check_title)
+                                    or (int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE))
+                                    or (brand_name in data_web["meta"]["title"])
+                                ):
                                     # time.sleep(99999)
 
                                     insert_data_thuong_hieu(

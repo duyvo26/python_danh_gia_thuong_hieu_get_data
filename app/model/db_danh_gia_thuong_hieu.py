@@ -2,8 +2,7 @@
 import mysql.connector
 from mysql.connector import Error
 from app.config import settings
-from datetime import datetime
-import time
+from datetime import datetime, timedelta
 
 
 # Hàm kết nối đến cơ sở dữ liệu MySQL
@@ -23,35 +22,89 @@ def connect_to_mysql():
     return None
 
 
-# # Hàm thêm dữ liệu vào bảng data_thuong_hieu
-# def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_timeline):
-#     connection = connect_to_mysql()
-#     if connection:
-#         try:
-#             cursor = connection.cursor()
-#             # Lấy thời gian hiện tại cho datetime_data, created_at, và updated_at
-#             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def get_request_thuong_hieu_chua_tao_list():
+    """
+    Trả về danh sách các bản ghi từ `request_thuong_hieu` có status = 0
+    và chưa có dữ liệu trong bảng `request_thuong_hieu_list`.
+    """
 
-#             # Câu lệnh SQL để thêm dữ liệu
-#             query = """
-#             INSERT INTO `data_thuong_hieu` (`id_rq`, `title`, `keyword`, `page_content`, `docs`, `datetime_data`, `created_at`, `updated_at`)
-#             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-#             """
-#             # Dữ liệu cần thêm
-#             data = (id_rq, title, keyword, page_content, docs, search_timeline, current_time, current_time)
+    connection = connect_to_mysql()
+    cursor = connection.cursor(dictionary=True)  # Trả kết quả dưới dạng dict
 
-#             # Thực thi câu lệnh SQL
-#             cursor.execute(query, data)
-#             connection.commit()
-#             print("data_added_successfully!")
-#         except Error as e:
-#             print("error_adding_data:", e)
-#         finally:
-#             # Đóng kết nối và con trỏ
-#             cursor.close()
-#             connection.close()
-#     else:
-#         print("unable_to_connect_to_mysql_to_add_data.")
+    query = """
+        SELECT *
+        FROM request_thuong_hieu
+        WHERE status = 0
+        AND id_rq NOT IN (
+            SELECT DISTINCT id_rq FROM request_thuong_hieu_list
+        )
+    """
+
+    cursor.execute(query)
+    results = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return results
+
+
+def insert_request_thuong_hieu_list(id_rq: int, n_months: int, m_days: int):
+    """
+    Thêm dữ liệu vào bảng request_thuong_hieu_list cho id_rq.
+    - Chia khoảng từ tháng hiện tại lùi về N tháng.
+    - Mỗi dòng tương ứng với khoảng M ngày.
+    - Bỏ qua nếu đã tồn tại (id_rq, start_date, end_date).
+    """
+
+    connection = connect_to_mysql()
+    cursor = connection.cursor()
+
+    today = datetime.today()
+    # Ngày bắt đầu là ngày 1 của tháng (N tháng trước)
+    start_date = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+    start_date = start_date - timedelta(days=(n_months - 1) * 30)  # lùi về ~N tháng
+
+    end_date = today
+    date_pairs = []
+
+    current_start = start_date
+
+    while current_start < end_date:
+        current_end = current_start + timedelta(days=m_days - 1)
+        if current_end > end_date:
+            current_end = end_date
+        date_pairs.append((current_start.strftime("%Y-%m-%d"), current_end.strftime("%Y-%m-%d")))
+        current_start = current_end + timedelta(days=1)
+
+    # Lấy danh sách đã tồn tại
+    select_query = """
+        SELECT start_date_thuong_hieu, end_date_thuong_hieu
+        FROM request_thuong_hieu_list
+        WHERE id_rq = %s
+    """
+    cursor.execute(select_query, (id_rq,))
+    existing = set(cursor.fetchall())
+
+    # Chèn dữ liệu nếu chưa tồn tại
+    insert_query = """
+        INSERT INTO request_thuong_hieu_list (
+            id_rq, start_date_thuong_hieu, end_date_thuong_hieu, status, google_html
+        ) VALUES (%s, %s, %s, %s, %s)
+    """
+
+    inserted_count = 0
+    for start, end in date_pairs:
+        if (start, end) in existing:
+            continue
+        cursor.execute(insert_query, (id_rq, start, end, 0, None))
+        inserted_count += 1
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    print(f"✅ Đã thêm {inserted_count} dòng mới cho id_rq = {id_rq}.")
 
 
 def get_number_thuong_hieu(id_rq):
@@ -175,36 +228,6 @@ WHERE
 
 def get_request_thuong_hieu_list():
     return load_get_request_thuong_hieu_list()
-
-
-# def get_request_thuong_hieu_list_end():
-#     connection = connect_to_mysql()
-#     if connection:
-#         try:
-#             query = """
-#             SELECT request_thuong_hieu_list.id_rq_list,
-#                 request_thuong_hieu_list.id_rq,
-#                 request_thuong_hieu_list.google_html,
-#                 request_thuong_hieu.name_thuong_hieu,
-#                 request_thuong_hieu_list.start_date_thuong_hieu,
-#                 request_thuong_hieu_list.end_date_thuong_hieu
-
-#             FROM request_thuong_hieu_list
-#             JOIN request_thuong_hieu
-#                 ON request_thuong_hieu.id_rq = request_thuong_hieu_list.id_rq
-#             WHERE request_thuong_hieu_list.status = 1 AND request_thuong_hieu_list.google_html != '';
-#             """
-#             cursor = connection.cursor()
-#             cursor.execute(query)
-#             rows = cursor.fetchall()
-#             return rows
-
-#         except Error as e:
-#             print("error_while_executing_query:", e)
-#         finally:
-#             cursor.close()
-#             connection.close()
-#             print("get_request_thuong_hieu_list_end: mysql_connection_has_been_closed.")
 
 
 def check_id_thuong_hieu_run():
