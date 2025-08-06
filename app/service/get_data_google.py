@@ -1,4 +1,4 @@
-# import time
+import time
 from datetime import datetime
 
 # from app.service.reset_wifi import reset_wifi
@@ -95,7 +95,7 @@ class GetDataGoogle:
 
                 number += 1
 
-                # [time.sleep(1) or print("sleep:", _time) for _time in range(0, 2)]
+                [time.sleep(1) or print("sleep:", _time) for _time in range(0, 4)]
 
                 # self.reload_usb()
 
