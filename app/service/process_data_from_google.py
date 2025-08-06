@@ -21,6 +21,7 @@ from app.service.response_custom import response_custom as _response_custom
 # import requests
 import traceback
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import openai
 
@@ -45,9 +46,43 @@ def kiem_tra_tieu_de_giong_van_de(ten_van_de: str, tieu_de: str) -> bool:
     return response["choices"][0]["message"]["content"].strip().lower() == "true"
 
 
+
+
 class ProcessDataFromGoogle:
     def __init__(self):
         pass
+
+    def handle_url(self, url, brand_name, id_rq, _id_rq, search_timeline):
+        try:
+            print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
+            print(url)
+            data_web = self.response_custom(url)
+            if data_web != 404:
+                percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
+                print("percent_same", percent_same)
+                if "images (" in data_web["meta"]["title"]:
+                    return
+                print(data_web["meta"]["title"], "|", brand_name)
+                llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
+
+                print("---llm_check_title---", llm_check_title)
+
+                if (
+                    (llm_check_title)
+                    or (int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE))
+                    or (brand_name in data_web["meta"]["title"])
+                ):
+                    insert_data_thuong_hieu(
+                        id_rq=str(id_rq),
+                        title=data_web["meta"]["title"],
+                        keyword=data_web["meta"]["keywords"],
+                        page_content=url,
+                        docs=str(data_web),
+                        search_timeline=str(search_timeline),
+                    )
+        except Exception as e:
+            print(f"Lỗi xử lý URL {url}: {e}")
+
 
     def run(self):
         _id_rq_list = check_id_thuong_hieu_run()
@@ -88,38 +123,48 @@ class ProcessDataFromGoogle:
                         except Exception as e:
                             print("ProcessDataFromGoogle: run for 0", e)
                             traceback.print_exc()  # In chi tiết lỗi
+                            
+                            
 
-                    for url in _urls:
-                        try:
-                            print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
-                            print(url)
-                            data_web = self.response_custom(url)
-                            if data_web != 404:
-                                percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
-                                print("percent_same", percent_same)
-                                if "images (" in data_web["meta"]["title"]:
-                                    continue
-                                print(data_web["meta"]["title"], "|", brand_name)
-                                llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
+                    with ThreadPoolExecutor(max_workers=5) as executor:
+                            futures = [
+                                executor.submit(self.handle_url, url, brand_name, id_rq, _id_rq, search_timeline)
+                                for url in _urls
+                            ]
+                            for future in as_completed(futures):
+                                future.result()  # bắt lỗi nếu có
+                                
+                    # for url in _urls:
+                        # try:
+                        #     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
+                        #     print(url)
+                        #     data_web = self.response_custom(url)
+                        #     if data_web != 404:
+                        #         percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
+                        #         print("percent_same", percent_same)
+                        #         if "images (" in data_web["meta"]["title"]:
+                        #             continue
+                        #         print(data_web["meta"]["title"], "|", brand_name)
+                        #         llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
 
-                                print("---llm_check_title---", llm_check_title)
+                        #         print("---llm_check_title---", llm_check_title)
 
-                                if (
-                                    (llm_check_title)
-                                    or (int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE))
-                                    or (brand_name in data_web["meta"]["title"])
-                                ):
-                                    insert_data_thuong_hieu(
-                                        id_rq=str(id_rq),
-                                        title=data_web["meta"]["title"],
-                                        keyword=data_web["meta"]["keywords"],
-                                        page_content=url,
-                                        docs=str(data_web),
-                                        search_timeline=str(search_timeline),
-                                    )
+                        #         if (
+                        #             (llm_check_title)
+                        #             or (int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE))
+                        #             or (brand_name in data_web["meta"]["title"])
+                        #         ):
+                        #             insert_data_thuong_hieu(
+                        #                 id_rq=str(id_rq),
+                        #                 title=data_web["meta"]["title"],
+                        #                 keyword=data_web["meta"]["keywords"],
+                        #                 page_content=url,
+                        #                 docs=str(data_web),
+                        #                 search_timeline=str(search_timeline),
+                        #             )
 
-                        except Exception as e:
-                            print("ProcessDataFromGoogle: run for 1", e)
+                        # except Exception as e:
+                        #     print("ProcessDataFromGoogle: run for 1", e)
                 except Exception as e:
                     print("EX", e)
                     [time.sleep(1) or print("Null data:", _time) for _time in range(0, 5)]
