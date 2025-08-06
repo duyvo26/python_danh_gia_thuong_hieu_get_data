@@ -51,14 +51,9 @@ class ProcessDataFromGoogle:
 
     def run(self):
         _id_rq_list = check_id_thuong_hieu_run()
-        # print("_id_rq_list", _id_rq_list)
-
+        
         for _id_rq in _id_rq_list:
-            # print("_id_rq", _id_rq)
-
             list_data = get_request_thuong_hieu_list_end(_id_rq)
-            # print("list_data", list_data)
-            # print("len", len(list_data))
             for i in list_data:
                 try:
                     id_rq_list = i[0]
@@ -67,34 +62,20 @@ class ProcessDataFromGoogle:
                     brand_name = get_brand_name(i[1])[0][4]
                     start_date_thuong_hieu = i[3]
                     end_date_thuong_hieu = i[4]
-
-                    print("id_rq_list", id_rq_list)
+                    # print("id_rq_list", id_rq_list)
                     search_timeline = {
                         "start_date_thuong_hieu": str(start_date_thuong_hieu),
                         "end_date_thuong_hieu": str(end_date_thuong_hieu),
                     }
-
                     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
-
-                    # if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
-                    #     update_request_thuong_hieu_list_end(id_rq_list, 2)
-                    #     break
-
                     urls = self.extract_urls_from_parentheses(html_page)
-
                     print("urls", len(urls))
-                    # print("urls", (urls))
-
                     _urls = []
                     for url_ in urls:
                         try:
                             url_ = self.extract_url(url_)
-                            # print("extract_url", url_)
-
                             if url_ is None:
                                 continue
-
-                            # Bỏ qua link Google, Facebook, YouTube
                             if (
                                 "google." not in url_
                                 and "facebook.com" not in url_
@@ -108,29 +89,17 @@ class ProcessDataFromGoogle:
                             print("ProcessDataFromGoogle: run for 0", e)
                             traceback.print_exc()  # In chi tiết lỗi
 
-                    print("LEN URL", len(_urls))
-                    # print("URL", (_urls))
-
-                    # time.sleep(9999)
                     for url in _urls:
                         try:
                             print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
-                            # if get_number_thuong_hieu(_id_rq) >= int(os.environ["MAX_PAGE"]):
-                            #     update_request_thuong_hieu_list_end(id_rq_list, 2)
-                            #     break
-
                             print(url)
                             data_web = self.response_custom(url)
-
-                            # print("data_web", data_web)
                             if data_web != 404:
                                 percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
-                                # percent_same_full = CompareTitles().compare_text(brand_name, data_web[2])
                                 print("percent_same", percent_same)
                                 if "images (" in data_web["meta"]["title"]:
                                     continue
                                 print(data_web["meta"]["title"], "|", brand_name)
-                                # print("percent_same_full", percent_same_full)
                                 llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
 
                                 print("---llm_check_title---", llm_check_title)
@@ -140,8 +109,6 @@ class ProcessDataFromGoogle:
                                     or (int(percent_same) > int(settings.BRAND_SIMILARITY_PERCENTAGE))
                                     or (brand_name in data_web["meta"]["title"])
                                 ):
-                                    # time.sleep(99999)
-
                                     insert_data_thuong_hieu(
                                         id_rq=str(id_rq),
                                         title=data_web["meta"]["title"],
