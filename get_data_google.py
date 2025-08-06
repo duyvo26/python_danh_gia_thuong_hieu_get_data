@@ -6,9 +6,11 @@ from app.model.db_danh_gia_thuong_hieu import get_request_thuong_hieu_chua_tao_l
 if __name__ == "__main__":
     while True:
         danh_sach = get_request_thuong_hieu_chua_tao_list()
-        for item in danh_sach:
-            print(item["id_rq"])
 
+        for item in danh_sach:
+            print(item)
+            print(item["id_rq"])
+            # break
             insert_request_thuong_hieu_list(id_rq=item["id_rq"], n_months=6, m_days=14)
 
         try:

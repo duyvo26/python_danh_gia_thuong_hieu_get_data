@@ -23,18 +23,13 @@ def connect_to_mysql():
 
 
 def get_request_thuong_hieu_chua_tao_list():
-    """
-    Trả về danh sách các bản ghi từ `request_thuong_hieu` có status = 0
-    và chưa có dữ liệu trong bảng `request_thuong_hieu_list`.
-    """
-
     connection = connect_to_mysql()
     cursor = connection.cursor(dictionary=True)  # Trả kết quả dưới dạng dict
 
     query = """
         SELECT *
         FROM request_thuong_hieu
-        WHERE status = 1
+        WHERE status = 0
         AND id_rq NOT IN (
             SELECT DISTINCT id_rq FROM request_thuong_hieu_list
         )
