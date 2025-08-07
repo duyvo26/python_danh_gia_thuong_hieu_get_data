@@ -19,14 +19,49 @@ def check_captcha(html):
     return True
 
 
+
+
+import os
+
+PROXY_FILE_PATH = "proxy_index.txt"
+
+
+def read_proxy_index():
+    try:
+        with open(PROXY_FILE_PATH, "r") as f:
+            return int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0  # Mặc định là 0 nếu chưa có file
+
+
+def write_proxy_index(index):
+    with open(PROXY_FILE_PATH, "w") as f:
+        f.write(str(index))
+
+
 def get_proxy_config_from_env():
+    index = read_proxy_index()
+    next_index = (index + 1) % 2  # Giả sử có 2 proxy, bạn có thể mở rộng nếu có nhiều hơn
+
+    # Lưu lại index cho lần gọi tiếp theo
+    write_proxy_index(next_index)
+
+    # Đọc thông tin từ biến môi trường
+    prefix = "" if index == 0 else f"_{index}"
+    proxy = {
+        "username": os.getenv(f"PROXY_USERNAME{prefix}"),
+        "password": os.getenv(f"PROXY_PASSWORD{prefix}"),
+        "host": os.getenv(f"PROXY_HOST{prefix}"),
+        "port": os.getenv(f"PROXY_PORT{prefix}"),
+    }
+
     return ProxyConfig(  # noqa: F405
-        server=f"http://{os.getenv('PROXY_HOST')}:{os.getenv('PROXY_PORT')}",
-        username=os.getenv("PROXY_USERNAME"),
-        password=os.getenv("PROXY_PASSWORD"),
+        server=f"http://{proxy['host']}:{proxy['port']}",
+        username=proxy["username"],
+        password=proxy["password"],
     )
-
-
+    
+    
 async def crawl4ai_run_proxy(url, proxy=False):
     print(f"Đang dùng proxy")  # noqa: F541
 
