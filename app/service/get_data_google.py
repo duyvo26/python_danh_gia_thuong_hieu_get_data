@@ -27,6 +27,7 @@ class GetDataGoogle:
             return None
 
     def run(self, number=0, max_number=30):
+        print("GetDataGoogle")
         try:
             list_data = get_request_thuong_hieu_list()
             for data in list_data:

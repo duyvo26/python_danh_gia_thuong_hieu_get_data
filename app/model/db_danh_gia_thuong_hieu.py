@@ -198,7 +198,7 @@ JOIN
             request_thuong_hieu rt_sub 
             ON rt_sub.id_rq = rtl_sub.id_rq
         WHERE 
-            (rtl_sub.status = 0 OR rtl_sub.google_html = '')
+            (rtl_sub.status = 0 OR rtl_sub.google_html is NULL)
         GROUP BY 
             rt_sub.email, 
             rtl_sub.start_date_thuong_hieu, 
@@ -224,37 +224,38 @@ def get_request_thuong_hieu_list():
     return load_get_request_thuong_hieu_list()
 
 
-def check_id_thuong_hieu_run():
+def check_list_google_end():
+    # kiem ta thuong hieu nao da lay xong google
     connection = connect_to_mysql()
     if connection:
         try:
+            # lay danh sach da co gg html
             query = """
                 SELECT  id_rq
                 FROM request_thuong_hieu_list
-                WHERE status = 1 AND google_html != '' 
-                GROUP By id_rq
+                WHERE status = 1 AND google_html is not NULL 
+                Group By id_rq
             """
             cursor = connection.cursor()
             cursor.execute(query)
             rows = cursor.fetchall()
 
-            _list_id_run = []
-
-            for i in rows:
-                _id_rq = i[0]
-                print("i", _id_rq)
+            arr_end_gooogle = []
+            for data in rows:
+                # print("----", data[0])
                 query = f"""
-                SELECT COUNT(id_rq) FROM `request_thuong_hieu_list` WHERE google_html = '' AND id_rq = {_id_rq}
+                    SELECT  id_rq
+                    FROM request_thuong_hieu_list
+                    WHERE status = 0 AND google_html is NULL AND id_rq = {data[0]}
+                    Group By id_rq
                 """
                 cursor = connection.cursor()
                 cursor.execute(query)
                 rows = cursor.fetchall()
-                count_html_google = rows[0][0]
-                print("count html google", count_html_google)
-                if int(count_html_google) == 0:
-                    _list_id_run.append(_id_rq)
-
-            return _list_id_run
+                # print("ROW", rows)
+                if rows == []:
+                    arr_end_gooogle.append(data[0])
+            return arr_end_gooogle
 
         except Error as e:
             print("error_while_executing_query:", e)
@@ -277,7 +278,7 @@ def get_request_thuong_hieu_list_end(id_rq):
                 
             FROM request_thuong_hieu_list
             
-            WHERE status = 1 AND google_html != '' AND id_rq = {id_rq};
+            WHERE status = 1 AND google_html is not AND id_rq = {id_rq};
             """
             cursor = connection.cursor()
             cursor.execute(query)

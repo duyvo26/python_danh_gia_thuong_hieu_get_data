@@ -6,7 +6,7 @@ from app.model.db_danh_gia_thuong_hieu import (
     get_brand_name,
     insert_data_thuong_hieu,
     update_request_thuong_hieu_list_end,
-    check_id_thuong_hieu_run,
+    check_list_google_end,
     get_number_thuong_hieu,
 )
 from bs4 import BeautifulSoup
@@ -82,7 +82,7 @@ class ProcessDataFromGoogle:
             print(f"Lỗi xử lý URL {url}: {e}")
 
     def run(self):
-        _id_rq_list = check_id_thuong_hieu_run()
+        _id_rq_list = check_list_google_end()
 
         for _id_rq in _id_rq_list:
             list_data = get_request_thuong_hieu_list_end(_id_rq)
