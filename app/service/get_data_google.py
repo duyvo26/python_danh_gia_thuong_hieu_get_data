@@ -26,15 +26,6 @@ class GetDataGoogle:
         except Exception as _:
             return None
 
-    # def reload_usb(self):
-    #     print("-reload_usb-")
-    #     while True:
-    #         [time.sleep(1) or print("reload usb:", _time) for _time in range(0, 2)]
-    #         _check_ip = check_ip()
-    #         print(_check_ip)
-    #         if _check_ip is False:
-    #             self.run(number=0, max_number=30)
-
     def run(self, number=0, max_number=30):
         try:
             list_data = get_request_thuong_hieu_list()
@@ -50,20 +41,9 @@ class GetDataGoogle:
                 end_date_thuong_hieu = data[3].strftime("%Y-%m-%d") if isinstance(data[3], datetime) else str(data[3])
                 name_thuong_hieu = data[8].lower()
 
-                # print(start_date_thuong_hieu)
-                # print(end_date_thuong_hieu)
-                # print(name_thuong_hieu)
-
-                # time.sleep(99999)
-                # url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi&tbm=nws"
-
                 url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi"
 
-                # # print("url: ", url_thuong_hieu)
-                # print(__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
                 _response = self.response_custom(url_thuong_hieu)
-                # print(_response)
 
                 if (
                     "https://support.google.com/websearch/answer/86640" in _response["markdown"]
@@ -74,16 +54,6 @@ class GetDataGoogle:
                     # print(_response)
                     print("ERR CAPTCHA")
                     return 0
-
-                # if _response is None:
-                # print("_response None")
-                #     self.reload_usb()
-
-                # if ">Tất cả".lower() not in _response.lower():
-                #     print("check tat ca fail")
-                #     self.reload_usb()
-
-                # print(_response)
 
                 threading.Thread(
                     target=self.update_data,
@@ -97,12 +67,6 @@ class GetDataGoogle:
 
                 [time.sleep(1) or print("sleep:", _time) for _time in range(0, 15)]
 
-                # self.reload_usb()
-
-            # [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
-
-            # self.reload_usb()
-
         except Exception as _:
             print(_)
             print("********************************")
@@ -115,9 +79,6 @@ class GetDataGoogle:
         urls = re.findall(r"(https?://[^\s\)]+)", content)
         url_count = len(urls)
         return url_count
-
-
-
 
     def update_data(self, _response, id_rq_list):
         # soup = BeautifulSoup(_response, "html.parser")
