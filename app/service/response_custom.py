@@ -42,7 +42,7 @@ def write_proxy_index(index):
 def get_proxy_config_from_env():
     index = read_proxy_index()
     next_index = (index + 1) % 2  # Giả sử có 2 proxy, bạn có thể mở rộng nếu có nhiều hơn
-
+    
     # Lưu lại index cho lần gọi tiếp theo
     write_proxy_index(next_index)
 
@@ -54,6 +54,8 @@ def get_proxy_config_from_env():
         "host": os.getenv(f"PROXY_HOST{prefix}"),
         "port": os.getenv(f"PROXY_PORT{prefix}"),
     }
+    
+    print("---INDEX PROXY---", next_index, proxy["host"])
 
     return ProxyConfig(  # noqa: F405
         server=f"http://{proxy['host']}:{proxy['port']}",

@@ -1,39 +1,30 @@
-# # https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi&tbm=nws
+import mysql.connector
+from app.config import settings
+import time
+from app.model.db_danh_gia_thuong_hieu import insert_request_thuong_hieu_list
 
 
-# import asyncio
-# from crawl4ai import *
-
-# url = f"https://www.google.com/search?q='tra hoa sam vo dung' after:2024-08-01 before:2024-08-03"
-
-
-# async def main():
-#     async with AsyncWebCrawler() as crawler:
-#         result = await crawler.arun(
-#             url=url,
-#         )
-#         print(result.markdown)
+conn = mysql.connector.connect(
+    host=settings.HOST,  # Địa chỉ máy chủ MySQL
+    database=settings.DATABASE,  # Tên cơ sở dữ liệu
+    user=settings.USER,  # Tên người dùng
+    password=settings.PASSWORD,  # Mật khẩu
+)
+cursor = conn.cursor(dictionary=True)
 
 
-# if __name__ == "__main__":
-#     asyncio.run(main())
+query = "SELECT * FROM `request_thuong_hieu` WHERE `status` IN (0, 1) AND `data` IS NULL;"
+cursor.execute(query)
+result = cursor.fetchall()
+for data in result:
+    print("***************************")
+    print("id_rq", data["id_rq"])
 
+    query = f"SELECT * FROM `request_thuong_hieu_list` WHERE `id_rq` = {data['id_rq']}"
+    cursor.execute(query)
+    result = cursor.fetchall()
+    print(len(result))
 
-import asyncio
-from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode
-from crawl4ai.extraction_strategy import JsonXPathExtractionStrategy
-from crawl4ai.async_configs import BrowserConfig, ProxyConfig
-
-
-async def main():
-
-
-    async with AsyncWebCrawler() as crawler:
-        result = await crawler.arun(
-            url="http://www.acecookvietnam.vn/",
-        )
-        print(result.markdown)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    if len(result) == 0:
+        insert_request_thuong_hieu_list(id_rq=data["id_rq"], n_months=6, m_days=14)
+    print("***************************")

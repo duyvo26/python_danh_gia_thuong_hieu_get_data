@@ -173,7 +173,7 @@ def insert_data_thuong_hieu(id_rq, title, keyword, page_content, docs, search_ti
 
 
 def load_get_request_thuong_hieu_list():
-    print("--load_get_request_thuong_hieu_list--")
+    # print("--load_get_request_thuong_hieu_list--")
     connection = connect_to_mysql()
     if connection:
         try:
@@ -206,8 +206,7 @@ JOIN
     ) latest 
     ON latest.max_id = rtl.id_rq_list
 WHERE 
-    rt.status = 0
-
+    rt.status IN (0, 1)
                 """
             cursor = connection.cursor()
             cursor.execute(query)
