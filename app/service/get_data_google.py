@@ -41,7 +41,7 @@ class GetDataGoogle:
                 end_date_thuong_hieu = data[3].strftime("%Y-%m-%d") if isinstance(data[3], datetime) else str(data[3])
                 name_thuong_hieu = data[8].lower()
 
-                url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi"
+                url_thuong_hieu = f"https://www.google.com/search?q=%22{name_thuong_hieu}%22 after:{start_date_thuong_hieu} before:{end_date_thuong_hieu}&hl=vi&gl=vn&lr=lang_vi"
 
                 _response = self.response_custom(url_thuong_hieu)
 

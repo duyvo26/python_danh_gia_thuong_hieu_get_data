@@ -53,17 +53,17 @@ class ProcessDataFromGoogle:
     def handle_url(self, url, brand_name, id_rq, _id_rq, search_timeline):
         try:
             print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
-            print(url)
+            # print(url)
             data_web = self.response_custom(url)
             if data_web != 404:
                 percent_same = CompareTitles().compare_text(brand_name, data_web["meta"]["title"])
-                print("percent_same", percent_same)
                 if "images (" in data_web["meta"]["title"]:
                     return
                 print(data_web["meta"]["title"], "|", brand_name)
                 llm_check_title = kiem_tra_tieu_de_giong_van_de(brand_name, data_web["meta"]["title"])
 
                 print("---llm_check_title---", llm_check_title)
+                print("percent_same", percent_same)
 
                 if (
                     (llm_check_title)
@@ -101,7 +101,7 @@ class ProcessDataFromGoogle:
                     }
                     print(f"----------------{get_number_thuong_hieu(_id_rq)}-------------------")
                     urls = self.extract_urls_from_parentheses(html_page)
-                    print("urls", len(urls))
+                    # print("urls", len(urls))
                     _urls = []
                     for url_ in urls:
                         try:
