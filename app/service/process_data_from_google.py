@@ -83,10 +83,12 @@ class ProcessDataFromGoogle:
 
     def run(self):
         _id_rq_list = check_list_google_end()
-
+        # print("_id_rq_list", _id_rq_list)
         for _id_rq in _id_rq_list:
             list_data = get_request_thuong_hieu_list_end(_id_rq)
             for i in list_data:
+                # print("i", i)
+                # time.sleep(99999)
                 try:
                     id_rq_list = i[0]
                     id_rq = i[1]
@@ -127,13 +129,23 @@ class ProcessDataFromGoogle:
                         for future in as_completed(futures):
                             future.result()  # bắt lỗi nếu có
 
+                    # Chờ tất cả thread xong
+                    for future in as_completed(futures):
+                        try:
+                            future.result()
+                        except Exception as e:
+                            print("Lỗi trong thread:", e)
+                    
+                    
+                    update_request_thuong_hieu_list_end(id_rq_list, 2)
+                    print("no_record_found_with_id_rq_list")
+                
                 except Exception as e:
                     print("EX", e)
                     [time.sleep(1) or print("Null data:", _time) for _time in range(0, 5)]
                     self.run()
 
-                update_request_thuong_hieu_list_end(id_rq_list, 2)
-                print("no_record_found_with_id_rq_list")
+
 
             [time.sleep(1) or print("Null data:", _time) for _time in range(0, 10)]
             self.run()

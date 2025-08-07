@@ -278,7 +278,7 @@ def get_request_thuong_hieu_list_end(id_rq):
                 
             FROM request_thuong_hieu_list
             
-            WHERE status = 1 AND google_html is not AND id_rq = {id_rq};
+            WHERE status = 1 AND google_html is not NULL AND id_rq = {id_rq};
             """
             cursor = connection.cursor()
             cursor.execute(query)
